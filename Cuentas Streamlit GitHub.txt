@@ -1,0 +1,6 @@
+Qué estás viendo
+
+lenin2486@gmail.com → es tu cuenta de acceso a Streamlit Cloud (la usas para iniciar sesión).
+
+github.com/lenin2486-bot → es la cuenta de GitHub que está conectada actualmente.
+Streamlit Cloud solo puede desplegar proyectos desde los repositorios que pertenecen a esa cuenta.
