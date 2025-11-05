@@ -462,6 +462,7 @@ with tab1:
                         gridOptions=grid_options,
                         height=780,
                         auto_size_columns=True,          # 👈 SOLO ESTA
+                        fit_columns_on_grid_load=True,
                         update_mode=GridUpdateMode.NO_UPDATE,
                         enable_enterprise_modules=False,
                         theme='streamlit',
@@ -784,6 +785,7 @@ with tab1:
                         gridOptions=grid_options_ac.copy(),
                         height=780,
                         auto_size_columns=True,          # 👈 SOLO ESTA
+                        fit_columns_on_grid_load=True,
                         update_mode=GridUpdateMode.NO_UPDATE,
                         enable_enterprise_modules=False,
                         theme='streamlit',
