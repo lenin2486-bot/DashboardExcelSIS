@@ -2,3 +2,8 @@ streamlit
 pandas
 openpyxl
 requests
+matplotlib
+numpy
+plotly
+seaborn
+scipy
