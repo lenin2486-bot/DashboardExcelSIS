@@ -22,7 +22,7 @@ tab1, tab2, tab3 = st.tabs(["📊 Digitación SIS", "📅 Asegurados", "📈 Ind
 
 # 🟦 TAB 1: Dashboard Digitación
 with tab1:
-        st.header("📈 Dashboard Digitación")
+        st.header("📈 Dashboard Digitación ARFSIS Web")
         # CSS con !important y selector correcto
         st.markdown("""
         <style>
@@ -93,47 +93,7 @@ with tab1:
                 return df
             except Exception as e:
                 st.error(f"Error cargando datos anuales: {e}")
-                return pd.DataFrame()
-
-        @st.cache_data
-        def cargar_datos_resumen_aseg_por_ppdd():
-            try:
-                url_data = requests.get(url_excel_resumen_aseg).content
-                df = pd.read_excel(BytesIO(url_data), sheet_name='Por_PPDD', engine='openpyxl')
-                return df
-            except Exception as e:
-                st.error(f"Error cargando datos asegurados: {e}")
-                return pd.DataFrame()            
-
-        @st.cache_data
-        def cargar_datos_resumen_aseg_por_eess():
-            try:
-                url_data = requests.get(url_excel_resumen_aseg).content
-                df = pd.read_excel(BytesIO(url_data), sheet_name='Por_EESS', engine='openpyxl')
-                return df
-            except Exception as e:
-                st.error(f"Error cargando datos asegurados: {e}")
-                return pd.DataFrame()            
-            
-        @st.cache_data
-        def cargar_datos_resumen_aseg_por_mic():
-            try:
-                url_data = requests.get(url_excel_resumen_aseg).content
-                df = pd.read_excel(BytesIO(url_data), sheet_name='Por_Mic', engine='openpyxl')
-                return df
-            except Exception as e:
-                st.error(f"Error cargando datos asegurados: {e}")
-                return pd.DataFrame()                        
-
-        @st.cache_data
-        def cargar_datos_indic_hiperten():
-            try:
-                url_data = requests.get(url_indic_hiperten).content
-                df = pd.read_excel(BytesIO(url_data), sheet_name='Hoja1', engine='openpyxl')
-                return df
-            except Exception as e:
-                st.error(f"Error cargando datos asegurados: {e}")
-                return pd.DataFrame()
+                return pd.DataFrame()               
 
         # Cargar ambos datasets
         with st.spinner('Cargando datos de digitación...'):
@@ -144,18 +104,6 @@ with tab1:
 
         with st.spinner('Cargando datos anuales...'):
             df_anual = cargar_datos_anual()
-
-        with st.spinner('Cargando datos resumen asegurados por PPDD...'):
-            df_resumen_aseg_por_ppdd = cargar_datos_resumen_aseg_por_ppdd()            
-
-        with st.spinner('Cargando datos resumen asegurados por EESS...'):
-            df_resumen_aseg_por_eess = cargar_datos_resumen_aseg_por_eess()            
-
-        with st.spinner('Cargando datos resumen asegurados por EESS...'):
-            df_resumen_aseg_por_mic = cargar_datos_resumen_aseg_por_mic()            
-
-        with st.spinner('Cargando datos resumen asegurados por EESS...'):
-            df_indic_hiperten = cargar_datos_indic_hiperten()
 
         # Verificar si los datos se cargaron correctamente
         if df_digitacion.empty:
@@ -172,45 +120,21 @@ with tab1:
             # Crear un DataFrame vacío con las columnas esperadas para evitar errores
             df_anual = pd.DataFrame(columns=['Formula', 'Nro', 'CodPpdd', 'Ppdd', 'Oportunos', 'Total_Fuas', 'Indicador', 'Mes', 'Año'])
 
-        if df_resumen_aseg_por_ppdd.empty:
-            st.warning("No se pudieron cargar los datos de asegurados. Algunas funciones no estarán disponibles.")
-            # Crear un DataFrame vacío con las columnas esperadas para evitar errores
-            df_resumen_aseg_por_ppdd = pd.DataFrame(columns=['Nro',	'Ppdd',	'Asegurados'])
-
-        if df_resumen_aseg_por_mic.empty:
-            st.warning("No se pudieron cargar los datos de asegurados. Algunas funciones no estarán disponibles.")
-            # Crear un DataFrame vacío con las columnas esperadas para evitar errores
-            df_resumen_aseg_por_mic = pd.DataFrame(columns=['Nro',	'Microrred','Asegurados'])
-
-        if df_resumen_aseg_por_eess.empty:
-            st.warning("No se pudieron cargar los datos de asegurados. Algunas funciones no estarán disponibles.")
-            # Crear un DataFrame vacío con las columnas esperadas para evitar errores
-            df_resumen_aseg_por_eess = pd.DataFrame(columns=['Nro',	'Red','Microrred','Uni_func','Ppdd','Renaes','Eess','Asegurados'])
-
-        if df_indic_hiperten.empty:
-            st.warning("No se pudieron cargar los datos de asegurados. Algunas funciones no estarán disponibles.")
-            # Crear un DataFrame vacío con las columnas esperadas para evitar errores
-            df_indic_hiperten = pd.DataFrame(columns=['Nro','Microrred','Numerador','Denominador','Indicador'])
-
         # Limpiar nombres de columnas
         df_digitacion.columns = df_digitacion.columns.str.strip()
         df_mensual.columns = df_mensual.columns.str.strip()
         df_anual.columns = df_anual.columns.str.strip()
-        df_resumen_aseg_por_ppdd.columns = df_resumen_aseg_por_ppdd.columns.str.strip()
-        df_resumen_aseg_por_eess.columns = df_resumen_aseg_por_eess.columns.str.strip()
-        df_resumen_aseg_por_mic.columns = df_resumen_aseg_por_mic.columns.str.strip()
-        df_indic_hiperten.columns = df_indic_hiperten.columns.str.strip()
 
         # Mostrar información de éxito
         st.success("✅ Datos cargados correctamente")
 
         # Mostrar información de las columnas disponibles en el sidebar para debug
-        st.sidebar.subheader("🔍 Columnas Disponibles")
-        st.sidebar.write("**Digitación:**", list(df_digitacion.columns))
-        st.sidebar.write("**Mensual:**", list(df_mensual.columns))
-        st.sidebar.write("**Anual:**", list(df_anual.columns))
-        st.sidebar.write("**resumen_aseg_por_ppdd:**", list(df_resumen_aseg_por_ppdd.columns))
-        st.sidebar.write("**resumen_aseg_por_eess:**", list(df_resumen_aseg_por_eess.columns))        
+        # st.sidebar.subheader("🔍 Columnas Disponibles")
+        # st.sidebar.write("**Digitación:**", list(df_digitacion.columns))
+        # st.sidebar.write("**Mensual:**", list(df_mensual.columns))
+        # st.sidebar.write("**Anual:**", list(df_anual.columns))
+        # --- st.sidebar.write("**resumen_aseg_por_ppdd:**", list(df_resumen_aseg_por_ppdd.columns))
+        # --- st.sidebar.write("**resumen_aseg_por_eess:**", list(df_resumen_aseg_por_eess.columns))        
 
         # --- FUNCIÓN MEJORADA PARA LIMPIAR DATOS NUMÉRICOS ---
         def limpiar_y_preparar_dataframe(df, columnas_numericas):
@@ -250,15 +174,15 @@ with tab1:
             # --- Etiquetas grandes y visibles ---
             for i, val in enumerate(df_resumen["Cantidad"]):
                 ax1.text(i, val + (max(df_resumen["Cantidad"]) * 0.03), str(val),
-                        ha='center', fontsize=14, weight='bold', color='black',
+                        ha='center', fontsize=12, weight='bold', color='black',
                         bbox=dict(facecolor='white', edgecolor='none', alpha=0.7, pad=2))
             
             # --- Personalización del primer gráfico ---
             # ---  ax1.set_title(f"Tendencia de Cantidad por Mes - {punto}", fontsize=20, weight='bold')
             ax1.set_xlabel("Mes", fontsize=16, weight='bold')
             ax1.set_ylabel("Cantidad Total", fontsize=16, weight='bold')
-            plt.xticks(fontsize=14, rotation=45)
-            plt.yticks(fontsize=14)
+            plt.xticks(fontsize=12, rotation=45)
+            plt.yticks(fontsize=12)
             ax1.grid(True, linestyle='--', alpha=0.5)
             ax1.set_ylim(bottom=0)
             plt.subplots_adjust(top=0.85)
@@ -276,18 +200,18 @@ with tab1:
             fig2, ax2 = plt.subplots(figsize=(12, 6))
             ax2.plot(df_total_mes["Mesletras"], df_total_mes["Cantidad"], marker='o', linewidth=3, color='#28a745')
             
-            # --- Etiquetas para el total general ---
+            # --- Etiquetas para el total general (MODIFICADO) ---
             for i, val in enumerate(df_total_mes["Cantidad"]):
                 ax2.text(i, val + (max(df_total_mes["Cantidad"]) * 0.03), f'{val:,}',
-                        ha='center', fontsize=14, weight='bold', color='black',
+                        ha='center', fontsize=11, weight='bold', color='black',  # CAMBIÉ fontsize=14 a fontsize=16
                         bbox=dict(facecolor='white', edgecolor='none', alpha=0.7, pad=2))
             
             # --- Personalización del segundo gráfico ---
-            ax2.set_title("Total General de Cantidad por Mes (Todos los PPDD)", fontsize=20, weight='bold')
+            ax2.set_title("Total General de Cantidad por Mes (Todos los PPDD)", fontsize=14, weight='bold')
             ax2.set_xlabel("Mes", fontsize=16, weight='bold')
             ax2.set_ylabel("Cantidad Total", fontsize=16, weight='bold')
-            plt.xticks(fontsize=14, rotation=45)
-            plt.yticks(fontsize=14)
+            plt.xticks(fontsize=12, rotation=45)
+            plt.yticks(fontsize=12)
             ax2.grid(True, linestyle='--', alpha=0.5)
             ax2.set_ylim(bottom=0, top=80000)
             plt.subplots_adjust(top=0.85)
@@ -298,10 +222,9 @@ with tab1:
             st.subheader("Desempeño Individual")
             
             # --- GRÁFICO 3: TENDENCIA POR PERSONA ---
-            st.subheader("📊 Tendencia de Cantidad por Persona")
-            
             # Filtro por Ppdd para el gráfico de personas
             punto_personas = st.selectbox("Selecciona Punto de Digitación para ver Personas", puntos, key="personas")
+            st.subheader("📊 Tendencia de Cantidad por Persona - " + punto_personas)            
             
             # Filtrar datos por el punto seleccionado
             df_personas = df_digitacion[df_digitacion["Ppdd"] == punto_personas]
@@ -346,7 +269,7 @@ with tab1:
                                     weight='bold')
                 
                 # --- Personalización del gráfico ---
-                ax3.set_title(f"Tendencia de Cantidad por Persona - {punto_personas}", fontsize=20, weight='bold')
+                # --- ax3.set_title(f"Tendencia de Cantidad por Persona - {punto_personas}", fontsize=14, weight='bold')
                 ax3.set_xlabel("Mes", fontsize=16, weight='bold')
                 ax3.set_ylabel("Cantidad", fontsize=16, weight='bold')
                 plt.xticks(fontsize=14, rotation=45)
@@ -363,28 +286,6 @@ with tab1:
                 plt.subplots_adjust(bottom=0.2)
                 st.pyplot(fig3)
                 
-                # Mostrar tabla de datos de personas
-                st.subheader(f"📋 Datos por Persona - {punto_personas}")
-                df_tabla_personas = df_personas_mes.pivot_table(
-                    index=['Mes', 'Mesletras'], 
-                    columns='Nombres', 
-                    values='Cantidad', 
-                    fill_value=0
-                ).reset_index()
-                
-                df_tabla_personas = df_tabla_personas[['Mesletras'] + list(personas_seleccionadas)]
-                df_tabla_personas = df_tabla_personas.rename(columns={'Mesletras': 'Mes'})
-                
-                # índice empieza en 1
-                df_tabla_personas.index = df_tabla_personas.index + 1
-                
-                # USAR DATA EDITOR PARA MOSTRAR FILTROS
-                st.data_editor(
-                    df_tabla_personas,
-                    use_container_width=True,
-                    hide_index=True,
-                    disabled=True  # Hacerla de solo lectura
-                )
                 
             else:
                 st.info("Por favor selecciona al menos una persona para visualizar el gráfico.")
@@ -1029,7 +930,65 @@ with tab2:
 # LIENZO 7 ASEGURADOS POR PUNTOS DE DIGITACION    
     import io  # Agregar esta línea con las otras importaciones
     st.header("📅 Asegurados por Punto de Digitación")
-    
+
+    @st.cache_data
+    def cargar_datos_resumen_aseg_por_ppdd():
+        try:
+            url_data = requests.get(url_excel_resumen_aseg).content
+            df = pd.read_excel(BytesIO(url_data), sheet_name='Por_PPDD', engine='openpyxl')
+            return df
+        except Exception as e:
+            st.error(f"Error cargando datos asegurados: {e}")
+            return pd.DataFrame()            
+
+    @st.cache_data
+    def cargar_datos_resumen_aseg_por_eess():
+        try:
+            url_data = requests.get(url_excel_resumen_aseg).content
+            df = pd.read_excel(BytesIO(url_data), sheet_name='Por_EESS', engine='openpyxl')
+            return df
+        except Exception as e:
+            st.error(f"Error cargando datos asegurados: {e}")
+            return pd.DataFrame()            
+        
+    @st.cache_data
+    def cargar_datos_resumen_aseg_por_mic():
+        try:
+            url_data = requests.get(url_excel_resumen_aseg).content
+            df = pd.read_excel(BytesIO(url_data), sheet_name='Por_Mic', engine='openpyxl')
+            return df
+        except Exception as e:
+            st.error(f"Error cargando datos asegurados: {e}")
+            return pd.DataFrame()      
+
+    with st.spinner('Cargando datos resumen asegurados por PPDD...'):
+        df_resumen_aseg_por_ppdd = cargar_datos_resumen_aseg_por_ppdd()            
+
+    with st.spinner('Cargando datos resumen asegurados por EESS...'):
+        df_resumen_aseg_por_eess = cargar_datos_resumen_aseg_por_eess()            
+
+    with st.spinner('Cargando datos resumen asegurados por EESS...'):
+        df_resumen_aseg_por_mic = cargar_datos_resumen_aseg_por_mic()            
+
+    if df_resumen_aseg_por_ppdd.empty:
+        st.warning("No se pudieron cargar los datos de asegurados. Algunas funciones no estarán disponibles.")
+        # Crear un DataFrame vacío con las columnas esperadas para evitar errores
+        df_resumen_aseg_por_ppdd = pd.DataFrame(columns=['Nro',	'Ppdd',	'Asegurados'])
+
+    if df_resumen_aseg_por_mic.empty:
+        st.warning("No se pudieron cargar los datos de asegurados. Algunas funciones no estarán disponibles.")
+        # Crear un DataFrame vacío con las columnas esperadas para evitar errores
+        df_resumen_aseg_por_mic = pd.DataFrame(columns=['Nro',	'Microrred','Asegurados'])
+
+    if df_resumen_aseg_por_eess.empty:
+        st.warning("No se pudieron cargar los datos de asegurados. Algunas funciones no estarán disponibles.")
+        # Crear un DataFrame vacío con las columnas esperadas para evitar errores
+        df_resumen_aseg_por_eess = pd.DataFrame(columns=['Nro',	'Red','Microrred','Uni_func','Ppdd','Renaes','Eess','Asegurados'])
+
+    df_resumen_aseg_por_ppdd.columns = df_resumen_aseg_por_ppdd.columns.str.strip()
+    df_resumen_aseg_por_eess.columns = df_resumen_aseg_por_eess.columns.str.strip()
+    df_resumen_aseg_por_mic.columns = df_resumen_aseg_por_mic.columns.str.strip()
+
     # Verificar si hay datos disponibles y que sea un DataFrame
     if (not hasattr(df_resumen_aseg_por_ppdd, 'columns') or 
         df_resumen_aseg_por_ppdd.empty or 
@@ -1820,6 +1779,27 @@ with tab3:
     with st.expander("📊 **INDICADOR DE HIPERTENSIÓN**", expanded=True):
         st.subheader("Filtros para el Indicador")
         
+        @st.cache_data
+        def cargar_datos_indic_hiperten():
+            try:
+                url_data = requests.get(url_indic_hiperten).content
+                df = pd.read_excel(BytesIO(url_data), sheet_name='Hoja1', engine='openpyxl')
+                return df
+            except Exception as e:
+                st.error(f"Error cargando datos de Hipertensos: {e}")
+                return pd.DataFrame()
+
+        with st.spinner('Cargando datos resumen Hipertensos por EESS...'):
+            df_indic_hiperten = cargar_datos_indic_hiperten()
+
+        if df_indic_hiperten.empty:
+            st.warning("No se pudieron cargar los datos de asegurados. Algunas funciones no estarán disponibles.")
+            # Crear un DataFrame vacío con las columnas esperadas para evitar errores
+            df_indic_hiperten = pd.DataFrame(columns=['Nro','Microrred','Numerador','Denominador','Indicador'])
+
+        # Limpiar nombres de columnas
+        df_indic_hiperten.columns = df_indic_hiperten.columns.str.strip()
+
         # --- Filtros Mes y Año ---
         col1, col2 = st.columns(2)
         
