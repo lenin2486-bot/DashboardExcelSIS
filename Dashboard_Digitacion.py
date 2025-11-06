@@ -290,609 +290,609 @@ with tab1:
             else:
                 st.info("Por favor selecciona al menos una persona para visualizar el gráfico.")
 
-# --- LIENZO 4: LISTADO DE DATOS MENSUALES ---
-with st.expander("📊 **LISTADO DE DATOS MENSUALES**", expanded=True):
-    st.subheader("📋 Listado Completo de Datos Mensuales")
-    
-    # Verificar si hay datos en el dataset anual
-    if df_mensual.empty or len(df_mensual) == 0:
-        st.warning("No hay datos disponibles en el dataset mensual.")
-    else:
-        # Filtros por mes y Año
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Obtener meses disponibles ordenados
-            orden_meses = [
-                "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-            ]
-
-            # Filtrar solo los meses que existen en el DataFrame
-            meses_disponibles = df_mensual["Mes"].dropna().unique()
-
-            # Ordenar los meses según el orden natural
-            meses_disponibles = sorted(
-                [m for m in meses_disponibles if m in orden_meses],
-                key=lambda x: orden_meses.index(x)
-            )
-
-            mes_seleccionado = st.selectbox(
-                "📅 Seleccione el mes:",
-                options=meses_disponibles,
-                key="mes_mensual",
-                index=meses_disponibles.index("Enero") if "Enero" in meses_disponibles else 0
-            )
-        
-        with col2:
-            # Obtener Años disponibles ordenados
-            if 'Año' in df_mensual.columns:
-                Años_disponibles = sorted(df_mensual['Año'].unique())
-                Año_seleccionado = st.selectbox(
-                    "Selecciona el Año", 
-                    options=Años_disponibles,
-                    key="anio_mensual",
-                    index=len(Años_disponibles)-1 if len(Años_disponibles) > 0 else 0
-                )
-            else:
-                st.error("No se encontró la columna 'Año' en los datos")
-                Año_seleccionado = None
-        
-        # Aplicar filtros
-        if mes_seleccionado and Año_seleccionado and 'Mes' in df_mensual.columns and 'Año' in df_mensual.columns:
-            df_filtradomensual = df_mensual[
-                (df_mensual['Mes'] == mes_seleccionado) & 
-                (df_mensual['Año'] == Año_seleccionado)
-            ].copy()
-        else:
-            df_filtradomensual = df_mensual.copy()
-        
-        # Ordenar por Indicador de mayor a menor si la columna existe
-        if 'Indicador' in df_filtradomensual.columns:
-            df_filtradomensual = df_filtradomensual.sort_values('Indicador', ascending=False)
-        else:
-            st.warning("No se encontró la columna 'Indicador' para ordenar")
-        
-        # Mostrar el listado de datos
-        st.subheader("📊 Listado Detallado (Ordenado por Indicador - Mayor a Menor)")
-        
-        # Columnas a mostrar
-        columnas_a_mostrar = ['CodPpdd', 'Ppdd', 'Oportunos', 'Total_Fuas', 'Indicador']
-        
-        # Verificar que las columnas existan en el DataFrame
-        columnas_existentes = [col for col in columnas_a_mostrar if col in df_filtradomensual.columns]
-        
-        if columnas_existentes:
-            # Preparar DataFrame para mostrar
-            df_mostrar_mensual = df_filtradomensual[columnas_existentes].copy().head(23)
-            df_mostrar_mensual = df_mostrar_mensual.reset_index(drop=True)
-            df_mostrar_mensual.insert(0, "N°", range(1, len(df_mostrar_mensual) + 1))
-
-            # LIMPIAR DATOS NUMÉRICOS
-            columnas_numericas = ["N°", "CodPpdd", "Oportunos", "Total_Fuas", "Indicador"]
-            df_mostrar_mensual = limpiar_y_preparar_dataframe(df_mostrar_mensual, columnas_numericas)
+        # --- LIENZO 4: LISTADO DE DATOS MENSUALES ---
+        with st.expander("📊 **LISTADO DE DATOS MENSUALES**", expanded=True):
+            st.subheader("📋 Listado Completo de Datos Mensuales")
             
-            # Crear una versión para mostrar con el indicador formateado como porcentaje
-            df_mostrar_formateado = df_mostrar_mensual.copy()
-            if 'Indicador' in df_mostrar_formateado.columns:
-                df_mostrar_formateado['Indicador'] = df_mostrar_formateado['Indicador'].apply(
-                    lambda x: f"{x:.1%}" if isinstance(x, (int, float)) and not pd.isna(x) else "N/A"
-                )
-
-            # FUNCIÓN PARA DETERMINAR COLOR DEL INDICADOR
-            def obtener_color_indicador(val):
-                if val == 'N/A' or val is None:
-                    return 'lightgray'
+            # Verificar si hay datos en el dataset anual
+            if df_mensual.empty or len(df_mensual) == 0:
+                st.warning("No hay datos disponibles en el dataset mensual.")
+            else:
+                # Filtros por mes y Año
+                col1, col2 = st.columns(2)
                 
-                try:
-                    if isinstance(val, str) and '%' in val:
-                        num_val = float(val.replace('%', '')) / 100
-                    else:
-                        num_val = float(val)
-                    
-                    if num_val >= 0.75:
-                        return '#00b050'
-                    elif num_val >= 0.60:
-                        return '#ffcc66'
-                    elif num_val >= 0.25:
-                        return '#ff7c80'
-                    else:
-                        return '#ff0000'
-                except (ValueError, TypeError):
-                    return 'lightgray'
+                with col1:
+                    # Obtener meses disponibles ordenados
+                    orden_meses = [
+                        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+                    ]
 
-            # FUNCIÓN PARA DETERMINAR COLOR DE TEXTO
-            def obtener_color_texto(val):
-                if val == 'N/A' or val is None:
-                    return 'black'
-                
-                try:
-                    if isinstance(val, str) and '%' in val:
-                        num_val = float(val.replace('%', '')) / 100
-                    else:
-                        num_val = float(val)
-                    
-                    if num_val >= 0.75:
-                        return 'white'
-                    elif num_val >= 0.60:
-                        return 'black'
-                    elif num_val >= 0.25:
-                        return 'black'
-                    else:
-                        return 'white'
-                except (ValueError, TypeError):
-                    return 'black'
+                    # Filtrar solo los meses que existen en el DataFrame
+                    meses_disponibles = df_mensual["Mes"].dropna().unique()
 
-            # CREAR TABLA HTML CON TEXTO 9 PUNTOS MÁS PEQUEÑO (IGUAL QUE LIENZO 5)
-            html_table = """
-            <div style="font-size: 17px; font-family: Arial, sans-serif;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 17px;">
-                <thead>
-                    <tr style="background-color: #f0f2f6;">
-            """
-            
-            # Encabezados de la tabla
-            for col in df_mostrar_formateado.columns:
-                html_table += f'<th style="padding: 9px; text-align: center; border: 2px solid #ddd; font-size: 21px; font-weight: bold;">{col}</th>'
-            
-            html_table += "</tr></thead><tbody>"
-            
-            # Filas de la tabla
-            for _, row in df_mostrar_formateado.iterrows():
-                html_table += '<tr style="border: 1px solid #ddd;">'
-                
-                for i, (col, val) in enumerate(row.items()):
-                    if col == 'Indicador':
-                        bg_color = obtener_color_indicador(val)
-                        text_color = obtener_color_texto(val)
-                        html_table += f'<td style="padding: 7px; text-align: center; border: 1px solid #ddd; font-size: 21px; font-weight: bold; background-color: {bg_color}; color: {text_color};">{val}</td>'
-                    else:
-                        html_table += f'<td style="padding: 7px; text-align: center; border: 1px solid #ddd; font-size: 17px;">{val}</td>'
-                
-                html_table += '</tr>'
-            
-            html_table += "</tbody></table></div>"
-            
-            # MOSTRAR TABLA HTML
-            st.markdown(html_table, unsafe_allow_html=True)
-
-            # Leyenda de colores con texto 9 puntos más pequeño (igual que LIENZO 5)
-            st.markdown("""
-            <div style="font-size: 17px; margin-top: 30px;">
-            <strong>🎨 Leyenda de Indicadores:</strong><br>
-            - <span style='color: white; background-color: #00b050; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 5px; display: inline-block;'>Bueno (75-100%)</span>
-            - <span style='color: black; background-color: #ffcc66; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 5px; display: inline-block;'>Regular (60-74%)</span>
-            - <span style='color: black; background-color: #ff7c80; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 5px; display: inline-block;'>En Proceso (25-59%)</span>
-            - <span style='color: white; background-color: #ff0000; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 5px; display: inline-block;'>Malo (0-24%)</span>
-            - <span style='color: black; background-color: lightgray; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 5px; display: inline-block;'>Datos Inválidos</span>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Mostrar información adicional con texto 9 puntos más pequeño
-            st.markdown(f"""
-            <div style="font-size: 13px; background-color: #e6f3ff; padding: 5px; border-radius: 5px; margin: 20px 0;">
-            ℹ️ Mostrando {len(df_mostrar_mensual)} registros del mes {mes_seleccionado} del Año {Año_seleccionado}, ordenados por Indicador (mayor a menor).
-            </div>
-            """, unsafe_allow_html=True)
-            
-        else:
-            st.error("No se encontraron las columnas especificadas en el dataset.")
-            st.write("Columnas disponibles en el dataset:", list(df_filtradomensual.columns))
-
-        # CSS GLOBAL PARA HACER TODO 9 PUNTOS MÁS PEQUEÑO (IGUAL QUE LIENZO 5)
-        st.markdown("""
-        <style>
-        /* Hacer todo el texto de Streamlit 9 puntos más pequeño */
-        .stApp {
-            font-size: 9px !important;
-        }
-        
-        /* Títulos */
-        h1, h2, h3 {
-            font-size: 21px !important;
-        }
-        
-        /* Métricas */
-        [data-testid="stMetricLabel"] {
-            font-size: 13px !important;
-        }
-        [data-testid="stMetricValue"] {
-            font-size: 25px !important;
-        }
-        [data-testid="stMetricDelta"] {
-            font-size: 13px !important;
-        }
-        
-        /* Selectboxes y controles */
-        .stSelectbox label, .stSlider label {
-            font-size: 13px !important;
-        }
-        .st-bb, .st-at, .st-ae {
-            font-size: 9px !important;
-        }
-        
-        /* Botones */
-        .stDownloadButton button {
-            font-size: 9px !important;
-            padding: 3px 13px !important;
-        }
-        
-        /* Expander */
-        .streamlit-expanderHeader {
-            font-size: 17px !important;
-            font-weight: bold !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-
-        # MOSTRAR MÉTRICAS DE RESUMEN
-        st.subheader(f"📈 Resumen - Mes {mes_seleccionado} / Año {Año_seleccionado}")
-        
-        col1, col2, col3, col4 = st.columns(4)
-        
-        with col1:
-            total_registros = len(df_filtradomensual)
-            st.metric("Total de Registros", f"{total_registros:,}")
-        
-        with col2:
-            if 'Oportunos' in df_filtradomensual.columns:
-                oportunos_numerico = pd.to_numeric(df_filtradomensual['Oportunos'], errors='coerce').fillna(0)
-                total_oportunos = int(oportunos_numerico.sum())
-                st.metric("Total Oportunos", f"{total_oportunos:,}")
-            else:
-                st.metric("Total Oportunos", "N/A")
-        
-        with col3:
-            if 'Total_Fuas' in df_filtradomensual.columns:
-                fuas_numerico = pd.to_numeric(df_filtradomensual['Total_Fuas'], errors='coerce').fillna(0)
-                total_fuas = int(fuas_numerico.sum())
-                st.metric("Total FUAS", f"{total_fuas:,}")
-            else:
-                st.metric("Total FUAS", "N/A")
-        
-        with col4:
-            if 'Indicador' in df_filtradomensual.columns:
-                indicador_numerico = pd.to_numeric(df_filtradomensual['Indicador'], errors='coerce')
-                indicador_promedio = indicador_numerico.mean() * 100
-                st.metric("Indicador Promedio", f"{indicador_promedio:.1f}%")
-            else:
-                st.metric("Indicador Promedio", "N/A")
-        
-        # Botón para descargar datos - CAMBIADO A XLSX
-        st.subheader("💾 Exportar Datos Filtrados")
-        
-        # Crear archivo Excel en memoria
-        excel_buffer = BytesIO()
-        with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-            df_filtradomensual.to_excel(writer, sheet_name='Datos_Mensuales', index=False)
-        excel_buffer.seek(0)
-        
-        st.download_button(
-            label="📥 Descargar listado filtrado en Excel",
-            data=excel_buffer,
-            file_name=f"datos_mensuales_{mes_seleccionado}_{Año_seleccionado}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-
-    # --- Pequeño script JS para volver a enfocar el selectbox ---
-        st.markdown(
-            """
-            <script>
-            const selects = parent.document.querySelectorAll('select');
-            if (selects.length > 0) {
-                // selecciona el último select (por si hay más de uno en la página)
-                const s = selects[selects.length - 1];
-                setTimeout(() => { s.focus(); }, 300);
-            }
-            </script>
-            """,
-            unsafe_allow_html=True
-        )
-
-# --- LIENZO 5: LISTADO DE DATOS ACUMULADOS ANUAL ---
-with st.expander("📊 **LISTADO DE DATOS ANUAL**", expanded=True):
-    st.subheader("📋 Listado Completo de Datos Acumulado")
-    
-    # Verificar si hay datos en el dataset anual
-    if df_anual.empty or len(df_anual) == 0:
-        st.warning("No hay datos disponibles en el dataset mensual.")
-    else:
-        # Filtros por mes y Año
-        col1_ac, col2_ac = st.columns(2)
-        
-        with col1_ac:
-            # Obtener meses disponibles ordenados
-            orden_meses_ac = [
-                "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-            ]
-
-            # Filtrar solo los meses que existen en el DataFrame
-            meses_disponibles_ac = df_anual["Mes"].dropna().unique()
-
-            # Ordenar los meses según el orden natural
-            meses_disponibles_ac = sorted(
-                [m for m in meses_disponibles_ac if m in orden_meses_ac],
-                key=lambda x: orden_meses_ac.index(x)
-            )
-
-            mes_seleccionado_ac = st.selectbox(
-                "📅 Seleccione el mes:",
-                options=meses_disponibles_ac,
-                key="mes_anual",
-                index=meses_disponibles_ac.index("Enero") if "Enero" in meses_disponibles_ac else 0
-            )
-        
-        with col2_ac:
-            # Obtener Años disponibles ordenados
-            if 'Año' in df_anual.columns:
-                Años_disponibles_ac = sorted(df_anual['Año'].unique())
-                Año_seleccionado_ac = st.selectbox(
-                    "Selecciona el Año", 
-                    options=Años_disponibles_ac,
-                    key="anio_anual",
-                    index=len(Años_disponibles_ac)-1 if len(Años_disponibles_ac) > 0 else 0
-                )
-            else:
-                st.error("No se encontró la columna 'Año' en los datos")
-                Año_seleccionado_ac = None
-        
-        # Aplicar filtros
-        if mes_seleccionado_ac and Año_seleccionado_ac and 'Mes' in df_anual.columns and 'Año' in df_anual.columns:
-            df_filtradoanual = df_anual[
-                (df_anual['Mes'] == mes_seleccionado_ac) & 
-                (df_anual['Año'] == Año_seleccionado_ac)
-            ].copy()
-        else:
-            df_filtradoanual = df_anual.copy()
-
-        # --- Mostrar advertencia si no hay datos ---
-        if df_filtradoanual.empty:
-            st.warning("No hay datos disponibles para ese mes y año.")
-        else:
-            # Ordenar por Indicador de mayor a menor si la columna existe
-            if 'Indicador' in df_filtradoanual.columns:
-                df_filtradoanual = df_filtradoanual.sort_values('Indicador', ascending=False)
-            else:
-                st.warning("No se encontró la columna 'Indicador' para ordenar")
-            
-            # Mostrar el listado de datos
-            st.subheader("📊 Listado Detallado (Ordenado por Indicador - Mayor a Menor)")
-            
-            # Columnas a mostrar
-            columnas_a_mostrar_ac = ['CodPpdd', 'Ppdd', 'Oportunos', 'Total_Fuas', 'Indicador']
-            
-            # Verificar que las columnas existan en el DataFrame
-            columnas_existentes_ac = [col for col in columnas_a_mostrar_ac if col in df_filtradoanual.columns]
-            
-            if columnas_existentes_ac:
-                # Preparar DataFrame para mostrar
-                df_mostrar_anual = df_filtradoanual[columnas_existentes_ac].copy().head(23)
-                df_mostrar_anual = df_mostrar_anual.reset_index(drop=True)
-                df_mostrar_anual.insert(0, "N°", range(1, len(df_mostrar_anual) + 1))
-
-                # LIMPIAR DATOS NUMÉRICOS
-                columnas_numericas_ac = ["N°", "CodPpdd", "Oportunos", "Total_Fuas", "Indicador"]
-                df_mostrar_anual = limpiar_y_preparar_dataframe(df_mostrar_anual, columnas_numericas_ac)
-                
-                # Crear una versión para mostrar con el indicador formateado como porcentaje
-                df_mostrar_formateado_ac = df_mostrar_anual.copy()
-                if 'Indicador' in df_mostrar_formateado_ac.columns:
-                    df_mostrar_formateado_ac['Indicador'] = df_mostrar_formateado_ac['Indicador'].apply(
-                        lambda x: f"{x:.1%}" if isinstance(x, (int, float)) and not pd.isna(x) else "N/A"
+                    # Ordenar los meses según el orden natural
+                    meses_disponibles = sorted(
+                        [m for m in meses_disponibles if m in orden_meses],
+                        key=lambda x: orden_meses.index(x)
                     )
 
-                # FUNCIÓN PARA DETERMINAR COLOR DEL INDICADOR
-                def obtener_color_indicador(val):
-                    if val == 'N/A' or val is None:
-                        return 'lightgray'
+                    mes_seleccionado = st.selectbox(
+                        "📅 Seleccione el mes:",
+                        options=meses_disponibles,
+                        key="mes_mensual",
+                        index=meses_disponibles.index("Enero") if "Enero" in meses_disponibles else 0
+                    )
+                
+                with col2:
+                    # Obtener Años disponibles ordenados
+                    if 'Año' in df_mensual.columns:
+                        Años_disponibles = sorted(df_mensual['Año'].unique())
+                        Año_seleccionado = st.selectbox(
+                            "Selecciona el Año", 
+                            options=Años_disponibles,
+                            key="anio_mensual",
+                            index=len(Años_disponibles)-1 if len(Años_disponibles) > 0 else 0
+                        )
+                    else:
+                        st.error("No se encontró la columna 'Año' en los datos")
+                        Año_seleccionado = None
+                
+                # Aplicar filtros
+                if mes_seleccionado and Año_seleccionado and 'Mes' in df_mensual.columns and 'Año' in df_mensual.columns:
+                    df_filtradomensual = df_mensual[
+                        (df_mensual['Mes'] == mes_seleccionado) & 
+                        (df_mensual['Año'] == Año_seleccionado)
+                    ].copy()
+                else:
+                    df_filtradomensual = df_mensual.copy()
+                
+                # Ordenar por Indicador de mayor a menor si la columna existe
+                if 'Indicador' in df_filtradomensual.columns:
+                    df_filtradomensual = df_filtradomensual.sort_values('Indicador', ascending=False)
+                else:
+                    st.warning("No se encontró la columna 'Indicador' para ordenar")
+                
+                # Mostrar el listado de datos
+                st.subheader("📊 Listado Detallado (Ordenado por Indicador - Mayor a Menor)")
+                
+                # Columnas a mostrar
+                columnas_a_mostrar = ['CodPpdd', 'Ppdd', 'Oportunos', 'Total_Fuas', 'Indicador']
+                
+                # Verificar que las columnas existan en el DataFrame
+                columnas_existentes = [col for col in columnas_a_mostrar if col in df_filtradomensual.columns]
+                
+                if columnas_existentes:
+                    # Preparar DataFrame para mostrar
+                    df_mostrar_mensual = df_filtradomensual[columnas_existentes].copy().head(23)
+                    df_mostrar_mensual = df_mostrar_mensual.reset_index(drop=True)
+                    df_mostrar_mensual.insert(0, "N°", range(1, len(df_mostrar_mensual) + 1))
+
+                    # LIMPIAR DATOS NUMÉRICOS
+                    columnas_numericas = ["N°", "CodPpdd", "Oportunos", "Total_Fuas", "Indicador"]
+                    df_mostrar_mensual = limpiar_y_preparar_dataframe(df_mostrar_mensual, columnas_numericas)
                     
-                    try:
-                        if isinstance(val, str) and '%' in val:
-                            num_val = float(val.replace('%', '')) / 100
-                        else:
-                            num_val = float(val)
+                    # Crear una versión para mostrar con el indicador formateado como porcentaje
+                    df_mostrar_formateado = df_mostrar_mensual.copy()
+                    if 'Indicador' in df_mostrar_formateado.columns:
+                        df_mostrar_formateado['Indicador'] = df_mostrar_formateado['Indicador'].apply(
+                            lambda x: f"{x:.1%}" if isinstance(x, (int, float)) and not pd.isna(x) else "N/A"
+                        )
+
+                    # FUNCIÓN PARA DETERMINAR COLOR DEL INDICADOR
+                    def obtener_color_indicador(val):
+                        if val == 'N/A' or val is None:
+                            return 'lightgray'
                         
-                        if num_val >= 0.75:
-                            return '#00b050'
-                        elif num_val >= 0.60:
-                            return '#ffcc66'
-                        elif num_val >= 0.25:
-                            return '#ff7c80'
-                        else:
-                            return '#ff0000'
-                    except (ValueError, TypeError):
-                        return 'lightgray'
+                        try:
+                            if isinstance(val, str) and '%' in val:
+                                num_val = float(val.replace('%', '')) / 100
+                            else:
+                                num_val = float(val)
+                            
+                            if num_val >= 0.75:
+                                return '#00b050'
+                            elif num_val >= 0.60:
+                                return '#ffcc66'
+                            elif num_val >= 0.25:
+                                return '#ff7c80'
+                            else:
+                                return '#ff0000'
+                        except (ValueError, TypeError):
+                            return 'lightgray'
 
-                # FUNCIÓN PARA DETERMINAR COLOR DE TEXTO
-                def obtener_color_texto(val):
-                    if val == 'N/A' or val is None:
-                        return 'black'
-                    
-                    try:
-                        if isinstance(val, str) and '%' in val:
-                            num_val = float(val.replace('%', '')) / 100
-                        else:
-                            num_val = float(val)
+                    # FUNCIÓN PARA DETERMINAR COLOR DE TEXTO
+                    def obtener_color_texto(val):
+                        if val == 'N/A' or val is None:
+                            return 'black'
                         
-                        if num_val >= 0.75:
-                            return 'white'
-                        elif num_val >= 0.60:
+                        try:
+                            if isinstance(val, str) and '%' in val:
+                                num_val = float(val.replace('%', '')) / 100
+                            else:
+                                num_val = float(val)
+                            
+                            if num_val >= 0.75:
+                                return 'white'
+                            elif num_val >= 0.60:
+                                return 'black'
+                            elif num_val >= 0.25:
+                                return 'black'
+                            else:
+                                return 'white'
+                        except (ValueError, TypeError):
                             return 'black'
-                        elif num_val >= 0.25:
-                            return 'black'
-                        else:
-                            return 'white'
-                    except (ValueError, TypeError):
-                        return 'black'
 
-                # CREAR TABLA HTML CON TEXTO 9 PUNTOS MÁS PEQUEÑO
-                html_table = """
-                <div style="font-size: 17px; font-family: Arial, sans-serif;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 17px;">
-                    <thead>
-                        <tr style="background-color: #f0f2f6;">
-                """
-                
-                # Encabezados de la tabla
-                for col in df_mostrar_formateado_ac.columns:
-                    html_table += f'<th style="padding: 9px; text-align: center; border: 2px solid #ddd; font-size: 21px; font-weight: bold;">{col}</th>'
-                
-                html_table += "</tr></thead><tbody>"
-                
-                # Filas de la tabla
-                for _, row in df_mostrar_formateado_ac.iterrows():
-                    html_table += '<tr style="border: 1px solid #ddd;">'
+                    # CREAR TABLA HTML CON TEXTO 9 PUNTOS MÁS PEQUEÑO (IGUAL QUE LIENZO 5)
+                    html_table = """
+                    <div style="font-size: 17px; font-family: Arial, sans-serif;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 17px;">
+                        <thead>
+                            <tr style="background-color: #f0f2f6;">
+                    """
                     
-                    for i, (col, val) in enumerate(row.items()):
-                        if col == 'Indicador':
-                            bg_color = obtener_color_indicador(val)
-                            text_color = obtener_color_texto(val)
-                            html_table += f'<td style="padding: 7px; text-align: center; border: 1px solid #ddd; font-size: 21px; font-weight: bold; background-color: {bg_color}; color: {text_color};">{val}</td>'
-                        else:
-                            html_table += f'<td style="padding: 7px; text-align: center; border: 1px solid #ddd; font-size: 17px;">{val}</td>'
+                    # Encabezados de la tabla
+                    for col in df_mostrar_formateado.columns:
+                        html_table += f'<th style="padding: 9px; text-align: center; border: 2px solid #ddd; font-size: 21px; font-weight: bold;">{col}</th>'
                     
-                    html_table += '</tr>'
-                
-                html_table += "</tbody></table></div>"
-                
-                # MOSTRAR TABLA HTML
-                st.markdown(html_table, unsafe_allow_html=True)
+                    html_table += "</tr></thead><tbody>"
+                    
+                    # Filas de la tabla
+                    for _, row in df_mostrar_formateado.iterrows():
+                        html_table += '<tr style="border: 1px solid #ddd;">'
+                        
+                        for i, (col, val) in enumerate(row.items()):
+                            if col == 'Indicador':
+                                bg_color = obtener_color_indicador(val)
+                                text_color = obtener_color_texto(val)
+                                html_table += f'<td style="padding: 7px; text-align: center; border: 1px solid #ddd; font-size: 21px; font-weight: bold; background-color: {bg_color}; color: {text_color};">{val}</td>'
+                            else:
+                                html_table += f'<td style="padding: 7px; text-align: center; border: 1px solid #ddd; font-size: 17px;">{val}</td>'
+                        
+                        html_table += '</tr>'
+                    
+                    html_table += "</tbody></table></div>"
+                    
+                    # MOSTRAR TABLA HTML
+                    st.markdown(html_table, unsafe_allow_html=True)
 
-                # Leyenda de colores con texto 9 puntos más pequeño
+                    # Leyenda de colores con texto 9 puntos más pequeño (igual que LIENZO 5)
+                    st.markdown("""
+                    <div style="font-size: 17px; margin-top: 30px;">
+                    <strong>🎨 Leyenda de Indicadores:</strong><br>
+                    - <span style='color: white; background-color: #00b050; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 5px; display: inline-block;'>Bueno (75-100%)</span>
+                    - <span style='color: black; background-color: #ffcc66; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 5px; display: inline-block;'>Regular (60-74%)</span>
+                    - <span style='color: black; background-color: #ff7c80; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 5px; display: inline-block;'>En Proceso (25-59%)</span>
+                    - <span style='color: white; background-color: #ff0000; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 5px; display: inline-block;'>Malo (0-24%)</span>
+                    - <span style='color: black; background-color: lightgray; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 5px; display: inline-block;'>Datos Inválidos</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Mostrar información adicional con texto 9 puntos más pequeño
+                    st.markdown(f"""
+                    <div style="font-size: 13px; background-color: #e6f3ff; padding: 5px; border-radius: 5px; margin: 20px 0;">
+                    ℹ️ Mostrando {len(df_mostrar_mensual)} registros del mes {mes_seleccionado} del Año {Año_seleccionado}, ordenados por Indicador (mayor a menor).
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                else:
+                    st.error("No se encontraron las columnas especificadas en el dataset.")
+                    st.write("Columnas disponibles en el dataset:", list(df_filtradomensual.columns))
+
+                # CSS GLOBAL PARA HACER TODO 9 PUNTOS MÁS PEQUEÑO (IGUAL QUE LIENZO 5)
                 st.markdown("""
-                <div style="font-size: 17px; margin-top: 30px;">
-                <strong>🎨 Leyenda de Indicadores:</strong><br>
-                - <span style='color: white; background-color: #00b050; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 5px; display: inline-block;'>Bueno (75-100%)</span>
-                - <span style='color: black; background-color: #ffcc66; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 5px; display: inline-block;'>Regular (60-74%)</span>
-                - <span style='color: black; background-color: #ff7c80; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 5px; display: inline-block;'>En Proceso (25-59%)</span>
-                - <span style='color: white; background-color: #ff0000; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 5px; display: inline-block;'>Malo (0-24%)</span>
-                - <span style='color: black; background-color: lightgray; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 5px; display: inline-block;'>Datos Inválidos</span>
-                </div>
-                """, unsafe_allow_html=True)
+                <style>
+                /* Hacer todo el texto de Streamlit 9 puntos más pequeño */
+                .stApp {
+                    font-size: 9px !important;
+                }
                 
-                # Mostrar información adicional con texto 9 puntos más pequeño
-                st.markdown(f"""
-                <div style="font-size: 13px; background-color: #e6f3ff; padding: 5px; border-radius: 5px; margin: 20px 0;">
-                ℹ️ Mostrando {len(df_mostrar_anual)} registros del mes {mes_seleccionado_ac} del Año {Año_seleccionado_ac}, ordenados por Indicador (mayor a menor).
-                </div>
-                """, unsafe_allow_html=True)
+                /* Títulos */
+                h1, h2, h3 {
+                    font-size: 21px !important;
+                }
                 
-            else:
-                st.error("No se encontraron las columnas especificadas en el dataset.")
-                st.write("Columnas disponibles en el dataset:", list(df_filtradoanual.columns))
+                /* Métricas */
+                [data-testid="stMetricLabel"] {
+                    font-size: 13px !important;
+                }
+                [data-testid="stMetricValue"] {
+                    font-size: 25px !important;
+                }
+                [data-testid="stMetricDelta"] {
+                    font-size: 13px !important;
+                }
+                
+                /* Selectboxes y controles */
+                .stSelectbox label, .stSlider label {
+                    font-size: 13px !important;
+                }
+                .st-bb, .st-at, .st-ae {
+                    font-size: 9px !important;
+                }
+                
+                /* Botones */
+                .stDownloadButton button {
+                    font-size: 9px !important;
+                    padding: 3px 13px !important;
+                }
+                
+                /* Expander */
+                .streamlit-expanderHeader {
+                    font-size: 17px !important;
+                    font-weight: bold !important;
+                }
+                </style>
+                """, unsafe_allow_html=True)
 
-            # CSS GLOBAL PARA HACER TODO 9 PUNTOS MÁS PEQUEÑO
-            st.markdown("""
-            <style>
-            /* Hacer todo el texto de Streamlit 9 puntos más pequeño */
-            .stApp {
-                font-size: 9px !important;
-            }
-            
-            /* Títulos */
-            h1, h2, h3 {
-                font-size: 21px !important;
-            }
-            
-            /* Métricas */
-            [data-testid="stMetricLabel"] {
-                font-size: 13px !important;
-            }
-            [data-testid="stMetricValue"] {
-                font-size: 25px !important;
-            }
-            [data-testid="stMetricDelta"] {
-                font-size: 13px !important;
-            }
-            
-            /* Selectboxes y controles */
-            .stSelectbox label, .stSlider label {
-                font-size: 13px !important;
-            }
-            .st-bb, .st-at, .st-ae {
-                font-size: 9px !important;
-            }
-            
-            /* Botones */
-            .stDownloadButton button {
-                font-size: 9px !important;
-                padding: 3px 13px !important;
-            }
-            
-            /* Expander */
-            .streamlit-expanderHeader {
-                font-size: 17px !important;
-                font-weight: bold !important;
-            }
-            </style>
-            """, unsafe_allow_html=True)
+                # MOSTRAR MÉTRICAS DE RESUMEN
+                st.subheader(f"📈 Resumen - Mes {mes_seleccionado} / Año {Año_seleccionado}")
+                
+                col1, col2, col3, col4 = st.columns(4)
+                
+                with col1:
+                    total_registros = len(df_filtradomensual)
+                    st.metric("Total de Registros", f"{total_registros:,}")
+                
+                with col2:
+                    if 'Oportunos' in df_filtradomensual.columns:
+                        oportunos_numerico = pd.to_numeric(df_filtradomensual['Oportunos'], errors='coerce').fillna(0)
+                        total_oportunos = int(oportunos_numerico.sum())
+                        st.metric("Total Oportunos", f"{total_oportunos:,}")
+                    else:
+                        st.metric("Total Oportunos", "N/A")
+                
+                with col3:
+                    if 'Total_Fuas' in df_filtradomensual.columns:
+                        fuas_numerico = pd.to_numeric(df_filtradomensual['Total_Fuas'], errors='coerce').fillna(0)
+                        total_fuas = int(fuas_numerico.sum())
+                        st.metric("Total FUAS", f"{total_fuas:,}")
+                    else:
+                        st.metric("Total FUAS", "N/A")
+                
+                with col4:
+                    if 'Indicador' in df_filtradomensual.columns:
+                        indicador_numerico = pd.to_numeric(df_filtradomensual['Indicador'], errors='coerce')
+                        indicador_promedio = indicador_numerico.mean() * 100
+                        st.metric("Indicador Promedio", f"{indicador_promedio:.1f}%")
+                    else:
+                        st.metric("Indicador Promedio", "N/A")
+                
+                # Botón para descargar datos - CAMBIADO A XLSX
+                st.subheader("💾 Exportar Datos Filtrados")
+                
+                # Crear archivo Excel en memoria
+                excel_buffer = BytesIO()
+                with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                    df_filtradomensual.to_excel(writer, sheet_name='Datos_Mensuales', index=False)
+                excel_buffer.seek(0)
+                
+                st.download_button(
+                    label="📥 Descargar listado filtrado en Excel",
+                    data=excel_buffer,
+                    file_name=f"datos_mensuales_{mes_seleccionado}_{Año_seleccionado}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
 
-            # MOSTRAR MÉTRICAS DE RESUMEN
-            st.subheader(f"📈 Resumen - Mes {mes_seleccionado_ac} / Año {Año_seleccionado_ac}")
-            
-            col1, col2, col3, col4 = st.columns(4)
-            
-            with col1:
-                total_registros = len(df_filtradoanual)
-                st.metric("Total de Registros", f"{total_registros:,}")
-            
-            with col2:
-                if 'Oportunos' in df_filtradoanual.columns:
-                    oportunos_numerico = pd.to_numeric(df_filtradoanual['Oportunos'], errors='coerce').fillna(0)
-                    total_oportunos = int(oportunos_numerico.sum())
-                    st.metric("Total Oportunos", f"{total_oportunos:,}")
-                else:
-                    st.metric("Total Oportunos", "N/A")
-            
-            with col3:
-                if 'Total_Fuas' in df_filtradoanual.columns:
-                    fuas_numerico = pd.to_numeric(df_filtradoanual['Total_Fuas'], errors='coerce').fillna(0)
-                    total_fuas = int(fuas_numerico.sum())
-                    st.metric("Total FUAS", f"{total_fuas:,}")
-                else:
-                    st.metric("Total FUAS", "N/A")
-            
-            with col4:
-                if 'Indicador' in df_filtradoanual.columns:
-                    indicador_numerico = pd.to_numeric(df_filtradoanual['Indicador'], errors='coerce')
-                    indicador_promedio = indicador_numerico.mean() * 100
-                    st.metric("Indicador Promedio", f"{indicador_promedio:.1f}%")
-                else:
-                    st.metric("Indicador Promedio", "N/A")
-            
-            # Botón para descargar datos - CAMBIADO A XLSX
-            st.subheader("💾 Exportar Datos Filtrados")
-            
-            # Crear archivo Excel en memoria
-            excel_buffer_anual = BytesIO()
-            with pd.ExcelWriter(excel_buffer_anual, engine='openpyxl') as writer:
-                df_filtradoanual.to_excel(writer, sheet_name='Datos_Anuales', index=False)
-            excel_buffer_anual.seek(0)
-            
-            st.download_button(
-                label="📥 Descargar listado filtrado en Excel",
-                data=excel_buffer_anual,
-                file_name=f"datos_anuales_{mes_seleccionado_ac}_{Año_seleccionado_ac}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-
-            # --- Script JS para enfocar SOLO este selectbox ---
-            st.markdown(
-                """
-                <script>
-                // Buscar el select más cercano al texto "Selecciona el año"
-                const labels = parent.document.querySelectorAll('label');
-                labels.forEach(lbl => {
-                    if (lbl.textContent.includes('Selecciona el año')) {
-                        const sel = lbl.parentElement.querySelector('select');
-                        if (sel) setTimeout(() => sel.focus(), 300);
+            # --- Pequeño script JS para volver a enfocar el selectbox ---
+                st.markdown(
+                    """
+                    <script>
+                    const selects = parent.document.querySelectorAll('select');
+                    if (selects.length > 0) {
+                        // selecciona el último select (por si hay más de uno en la página)
+                        const s = selects[selects.length - 1];
+                        setTimeout(() => { s.focus(); }, 300);
                     }
-                });
-                </script>
-                """,
-                unsafe_allow_html=True
-            )
+                    </script>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+        # --- LIENZO 5: LISTADO DE DATOS ACUMULADOS ANUAL ---
+        with st.expander("📊 **LISTADO DE DATOS ANUAL**", expanded=True):
+            st.subheader("📋 Listado Completo de Datos Acumulado")
+            
+            # Verificar si hay datos en el dataset anual
+            if df_anual.empty or len(df_anual) == 0:
+                st.warning("No hay datos disponibles en el dataset mensual.")
+            else:
+                # Filtros por mes y Año
+                col1_ac, col2_ac = st.columns(2)
+                
+                with col1_ac:
+                    # Obtener meses disponibles ordenados
+                    orden_meses_ac = [
+                        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+                    ]
+
+                    # Filtrar solo los meses que existen en el DataFrame
+                    meses_disponibles_ac = df_anual["Mes"].dropna().unique()
+
+                    # Ordenar los meses según el orden natural
+                    meses_disponibles_ac = sorted(
+                        [m for m in meses_disponibles_ac if m in orden_meses_ac],
+                        key=lambda x: orden_meses_ac.index(x)
+                    )
+
+                    mes_seleccionado_ac = st.selectbox(
+                        "📅 Seleccione el mes:",
+                        options=meses_disponibles_ac,
+                        key="mes_anual",
+                        index=meses_disponibles_ac.index("Enero") if "Enero" in meses_disponibles_ac else 0
+                    )
+                
+                with col2_ac:
+                    # Obtener Años disponibles ordenados
+                    if 'Año' in df_anual.columns:
+                        Años_disponibles_ac = sorted(df_anual['Año'].unique())
+                        Año_seleccionado_ac = st.selectbox(
+                            "Selecciona el Año", 
+                            options=Años_disponibles_ac,
+                            key="anio_anual",
+                            index=len(Años_disponibles_ac)-1 if len(Años_disponibles_ac) > 0 else 0
+                        )
+                    else:
+                        st.error("No se encontró la columna 'Año' en los datos")
+                        Año_seleccionado_ac = None
+                
+                # Aplicar filtros
+                if mes_seleccionado_ac and Año_seleccionado_ac and 'Mes' in df_anual.columns and 'Año' in df_anual.columns:
+                    df_filtradoanual = df_anual[
+                        (df_anual['Mes'] == mes_seleccionado_ac) & 
+                        (df_anual['Año'] == Año_seleccionado_ac)
+                    ].copy()
+                else:
+                    df_filtradoanual = df_anual.copy()
+
+                # --- Mostrar advertencia si no hay datos ---
+                if df_filtradoanual.empty:
+                    st.warning("No hay datos disponibles para ese mes y año.")
+                else:
+                    # Ordenar por Indicador de mayor a menor si la columna existe
+                    if 'Indicador' in df_filtradoanual.columns:
+                        df_filtradoanual = df_filtradoanual.sort_values('Indicador', ascending=False)
+                    else:
+                        st.warning("No se encontró la columna 'Indicador' para ordenar")
+                    
+                    # Mostrar el listado de datos
+                    st.subheader("📊 Listado Detallado (Ordenado por Indicador - Mayor a Menor)")
+                    
+                    # Columnas a mostrar
+                    columnas_a_mostrar_ac = ['CodPpdd', 'Ppdd', 'Oportunos', 'Total_Fuas', 'Indicador']
+                    
+                    # Verificar que las columnas existan en el DataFrame
+                    columnas_existentes_ac = [col for col in columnas_a_mostrar_ac if col in df_filtradoanual.columns]
+                    
+                    if columnas_existentes_ac:
+                        # Preparar DataFrame para mostrar
+                        df_mostrar_anual = df_filtradoanual[columnas_existentes_ac].copy().head(23)
+                        df_mostrar_anual = df_mostrar_anual.reset_index(drop=True)
+                        df_mostrar_anual.insert(0, "N°", range(1, len(df_mostrar_anual) + 1))
+
+                        # LIMPIAR DATOS NUMÉRICOS
+                        columnas_numericas_ac = ["N°", "CodPpdd", "Oportunos", "Total_Fuas", "Indicador"]
+                        df_mostrar_anual = limpiar_y_preparar_dataframe(df_mostrar_anual, columnas_numericas_ac)
+                        
+                        # Crear una versión para mostrar con el indicador formateado como porcentaje
+                        df_mostrar_formateado_ac = df_mostrar_anual.copy()
+                        if 'Indicador' in df_mostrar_formateado_ac.columns:
+                            df_mostrar_formateado_ac['Indicador'] = df_mostrar_formateado_ac['Indicador'].apply(
+                                lambda x: f"{x:.1%}" if isinstance(x, (int, float)) and not pd.isna(x) else "N/A"
+                            )
+
+                        # FUNCIÓN PARA DETERMINAR COLOR DEL INDICADOR
+                        def obtener_color_indicador(val):
+                            if val == 'N/A' or val is None:
+                                return 'lightgray'
+                            
+                            try:
+                                if isinstance(val, str) and '%' in val:
+                                    num_val = float(val.replace('%', '')) / 100
+                                else:
+                                    num_val = float(val)
+                                
+                                if num_val >= 0.75:
+                                    return '#00b050'
+                                elif num_val >= 0.60:
+                                    return '#ffcc66'
+                                elif num_val >= 0.25:
+                                    return '#ff7c80'
+                                else:
+                                    return '#ff0000'
+                            except (ValueError, TypeError):
+                                return 'lightgray'
+
+                        # FUNCIÓN PARA DETERMINAR COLOR DE TEXTO
+                        def obtener_color_texto(val):
+                            if val == 'N/A' or val is None:
+                                return 'black'
+                            
+                            try:
+                                if isinstance(val, str) and '%' in val:
+                                    num_val = float(val.replace('%', '')) / 100
+                                else:
+                                    num_val = float(val)
+                                
+                                if num_val >= 0.75:
+                                    return 'white'
+                                elif num_val >= 0.60:
+                                    return 'black'
+                                elif num_val >= 0.25:
+                                    return 'black'
+                                else:
+                                    return 'white'
+                            except (ValueError, TypeError):
+                                return 'black'
+
+                        # CREAR TABLA HTML CON TEXTO 9 PUNTOS MÁS PEQUEÑO
+                        html_table = """
+                        <div style="font-size: 17px; font-family: Arial, sans-serif;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 17px;">
+                            <thead>
+                                <tr style="background-color: #f0f2f6;">
+                        """
+                        
+                        # Encabezados de la tabla
+                        for col in df_mostrar_formateado_ac.columns:
+                            html_table += f'<th style="padding: 9px; text-align: center; border: 2px solid #ddd; font-size: 21px; font-weight: bold;">{col}</th>'
+                        
+                        html_table += "</tr></thead><tbody>"
+                        
+                        # Filas de la tabla
+                        for _, row in df_mostrar_formateado_ac.iterrows():
+                            html_table += '<tr style="border: 1px solid #ddd;">'
+                            
+                            for i, (col, val) in enumerate(row.items()):
+                                if col == 'Indicador':
+                                    bg_color = obtener_color_indicador(val)
+                                    text_color = obtener_color_texto(val)
+                                    html_table += f'<td style="padding: 7px; text-align: center; border: 1px solid #ddd; font-size: 21px; font-weight: bold; background-color: {bg_color}; color: {text_color};">{val}</td>'
+                                else:
+                                    html_table += f'<td style="padding: 7px; text-align: center; border: 1px solid #ddd; font-size: 17px;">{val}</td>'
+                            
+                            html_table += '</tr>'
+                        
+                        html_table += "</tbody></table></div>"
+                        
+                        # MOSTRAR TABLA HTML
+                        st.markdown(html_table, unsafe_allow_html=True)
+
+                        # Leyenda de colores con texto 9 puntos más pequeño
+                        st.markdown("""
+                        <div style="font-size: 17px; margin-top: 30px;">
+                        <strong>🎨 Leyenda de Indicadores:</strong><br>
+                        - <span style='color: white; background-color: #00b050; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 5px; display: inline-block;'>Bueno (75-100%)</span>
+                        - <span style='color: black; background-color: #ffcc66; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 5px; display: inline-block;'>Regular (60-74%)</span>
+                        - <span style='color: black; background-color: #ff7c80; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 5px; display: inline-block;'>En Proceso (25-59%)</span>
+                        - <span style='color: white; background-color: #ff0000; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 5px; display: inline-block;'>Malo (0-24%)</span>
+                        - <span style='color: black; background-color: lightgray; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 5px; display: inline-block;'>Datos Inválidos</span>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Mostrar información adicional con texto 9 puntos más pequeño
+                        st.markdown(f"""
+                        <div style="font-size: 13px; background-color: #e6f3ff; padding: 5px; border-radius: 5px; margin: 20px 0;">
+                        ℹ️ Mostrando {len(df_mostrar_anual)} registros del mes {mes_seleccionado_ac} del Año {Año_seleccionado_ac}, ordenados por Indicador (mayor a menor).
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                    else:
+                        st.error("No se encontraron las columnas especificadas en el dataset.")
+                        st.write("Columnas disponibles en el dataset:", list(df_filtradoanual.columns))
+
+                    # CSS GLOBAL PARA HACER TODO 9 PUNTOS MÁS PEQUEÑO
+                    st.markdown("""
+                    <style>
+                    /* Hacer todo el texto de Streamlit 9 puntos más pequeño */
+                    .stApp {
+                        font-size: 9px !important;
+                    }
+                    
+                    /* Títulos */
+                    h1, h2, h3 {
+                        font-size: 21px !important;
+                    }
+                    
+                    /* Métricas */
+                    [data-testid="stMetricLabel"] {
+                        font-size: 13px !important;
+                    }
+                    [data-testid="stMetricValue"] {
+                        font-size: 25px !important;
+                    }
+                    [data-testid="stMetricDelta"] {
+                        font-size: 13px !important;
+                    }
+                    
+                    /* Selectboxes y controles */
+                    .stSelectbox label, .stSlider label {
+                        font-size: 13px !important;
+                    }
+                    .st-bb, .st-at, .st-ae {
+                        font-size: 9px !important;
+                    }
+                    
+                    /* Botones */
+                    .stDownloadButton button {
+                        font-size: 9px !important;
+                        padding: 3px 13px !important;
+                    }
+                    
+                    /* Expander */
+                    .streamlit-expanderHeader {
+                        font-size: 17px !important;
+                        font-weight: bold !important;
+                    }
+                    </style>
+                    """, unsafe_allow_html=True)
+
+                    # MOSTRAR MÉTRICAS DE RESUMEN
+                    st.subheader(f"📈 Resumen - Mes {mes_seleccionado_ac} / Año {Año_seleccionado_ac}")
+                    
+                    col1, col2, col3, col4 = st.columns(4)
+                    
+                    with col1:
+                        total_registros = len(df_filtradoanual)
+                        st.metric("Total de Registros", f"{total_registros:,}")
+                    
+                    with col2:
+                        if 'Oportunos' in df_filtradoanual.columns:
+                            oportunos_numerico = pd.to_numeric(df_filtradoanual['Oportunos'], errors='coerce').fillna(0)
+                            total_oportunos = int(oportunos_numerico.sum())
+                            st.metric("Total Oportunos", f"{total_oportunos:,}")
+                        else:
+                            st.metric("Total Oportunos", "N/A")
+                    
+                    with col3:
+                        if 'Total_Fuas' in df_filtradoanual.columns:
+                            fuas_numerico = pd.to_numeric(df_filtradoanual['Total_Fuas'], errors='coerce').fillna(0)
+                            total_fuas = int(fuas_numerico.sum())
+                            st.metric("Total FUAS", f"{total_fuas:,}")
+                        else:
+                            st.metric("Total FUAS", "N/A")
+                    
+                    with col4:
+                        if 'Indicador' in df_filtradoanual.columns:
+                            indicador_numerico = pd.to_numeric(df_filtradoanual['Indicador'], errors='coerce')
+                            indicador_promedio = indicador_numerico.mean() * 100
+                            st.metric("Indicador Promedio", f"{indicador_promedio:.1f}%")
+                        else:
+                            st.metric("Indicador Promedio", "N/A")
+                    
+                    # Botón para descargar datos - CAMBIADO A XLSX
+                    st.subheader("💾 Exportar Datos Filtrados")
+                    
+                    # Crear archivo Excel en memoria
+                    excel_buffer_anual = BytesIO()
+                    with pd.ExcelWriter(excel_buffer_anual, engine='openpyxl') as writer:
+                        df_filtradoanual.to_excel(writer, sheet_name='Datos_Anuales', index=False)
+                    excel_buffer_anual.seek(0)
+                    
+                    st.download_button(
+                        label="📥 Descargar listado filtrado en Excel",
+                        data=excel_buffer_anual,
+                        file_name=f"datos_anuales_{mes_seleccionado_ac}_{Año_seleccionado_ac}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+
+                    # --- Script JS para enfocar SOLO este selectbox ---
+                    st.markdown(
+                        """
+                        <script>
+                        // Buscar el select más cercano al texto "Selecciona el año"
+                        const labels = parent.document.querySelectorAll('label');
+                        labels.forEach(lbl => {
+                            if (lbl.textContent.includes('Selecciona el año')) {
+                                const sel = lbl.parentElement.querySelector('select');
+                                if (sel) setTimeout(() => sel.focus(), 300);
+                            }
+                        });
+                        </script>
+                        """,
+                        unsafe_allow_html=True
+                    )
 
         # --- LIENZO 6: EXPORTACIÓN ---
         with st.expander("💾 **EXPORTACIÓN DE DATOS**", expanded=False):
