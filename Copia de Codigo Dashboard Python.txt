@@ -558,20 +558,15 @@ with st.expander("📊 **LISTADO DE DATOS MENSUALES**", expanded=True):
             else:
                 st.metric("Indicador Promedio", "N/A")
         
-        # Botón para descargar datos - CAMBIADO A XLSX
+        # Botón para descargar datos
         st.subheader("💾 Exportar Datos Filtrados")
         
-        # Crear archivo Excel en memoria
-        excel_buffer = BytesIO()
-        with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-            df_filtradomensual.to_excel(writer, sheet_name='Datos_Mensuales', index=False)
-        excel_buffer.seek(0)
-        
+        csv = df_filtradomensual.to_csv(index=False).encode('utf-8')
         st.download_button(
-            label="📥 Descargar listado filtrado en Excel",
-            data=excel_buffer,
-            file_name=f"datos_mensuales_{mes_seleccionado}_{Año_seleccionado}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            label="📥 Descargar listado filtrado en CSV",
+            data=csv,
+            file_name=f"datos_mensuales_{mes_seleccionado}_{Año_seleccionado}.csv",
+            mime="text/csv"
         )
 
     # --- Pequeño script JS para volver a enfocar el selectbox ---
@@ -861,20 +856,15 @@ with st.expander("📊 **LISTADO DE DATOS ANUAL**", expanded=True):
                 else:
                     st.metric("Indicador Promedio", "N/A")
             
-            # Botón para descargar datos - CAMBIADO A XLSX
+            # Botón para descargar datos
             st.subheader("💾 Exportar Datos Filtrados")
             
-            # Crear archivo Excel en memoria
-            excel_buffer_anual = BytesIO()
-            with pd.ExcelWriter(excel_buffer_anual, engine='openpyxl') as writer:
-                df_filtradoanual.to_excel(writer, sheet_name='Datos_Anuales', index=False)
-            excel_buffer_anual.seek(0)
-            
+            csv = df_filtradoanual.to_csv(index=False).encode('utf-8')
             st.download_button(
-                label="📥 Descargar listado filtrado en Excel",
-                data=excel_buffer_anual,
-                file_name=f"datos_anuales_{mes_seleccionado_ac}_{Año_seleccionado_ac}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                label="📥 Descargar listado filtrado en CSV",
+                data=csv,
+                file_name=f"datos_anuales_{mes_seleccionado_ac}_{Año_seleccionado_ac}.csv",
+                mime="text/csv"
             )
 
             # --- Script JS para enfocar SOLO este selectbox ---
@@ -915,34 +905,22 @@ with st.expander("📊 **LISTADO DE DATOS ANUAL**", expanded=True):
                 mime="application/pdf"
             )
             
-            # Botones adicionales para descargar datos en Excel - CAMBIADOS A XLSX
+            # Botón adicional para descargar datos en Excel
             col1, col2 = st.columns(2)
             with col1:
-                # Crear archivo Excel para datos de digitación
-                excel_digitacion = BytesIO()
-                with pd.ExcelWriter(excel_digitacion, engine='openpyxl') as writer:
-                    df_digitacion.to_excel(writer, sheet_name='Datos_Digitacion', index=False)
-                excel_digitacion.seek(0)
-                
                 st.download_button(
                     label="📥 Descargar datos de digitación",
-                    data=excel_digitacion,
-                    file_name="datos_digitacion.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    data=df_digitacion.to_csv(index=False).encode('utf-8'),
+                    file_name="datos_digitacion.csv",
+                    mime="text/csv"
                 )
             with col2:
                 if not df_mensual.empty:
-                    # Crear archivo Excel para datos mensuales
-                    excel_mensual = BytesIO()
-                    with pd.ExcelWriter(excel_mensual, engine='openpyxl') as writer:
-                        df_mensual.to_excel(writer, sheet_name='Datos_Mensuales', index=False)
-                    excel_mensual.seek(0)
-                    
                     st.download_button(
                         label="📥 Descargar datos mensuales completos",
-                        data=excel_mensual,
-                        file_name="datos_mensuales_completos.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        data=df_mensual.to_csv(index=False).encode('utf-8'),
+                        file_name="datos_mensuales_completos.csv",
+                        mime="text/csv"
                     )
                 else:
                     st.info("No hay datos mensuales para descargar")
@@ -1194,9 +1172,10 @@ with tab2:
                 promedio_por_punto = total_asegurados / total_puntos if total_puntos > 0 else 0
                 st.metric("Promedio por Punto", f"{promedio_por_punto:,.0f}")
             
-            # Botón para descargar datos - YA ESTÁ EN EXCEL (SE MANTIENE)
+            # Botón para descargar datos
             st.subheader("💾 Exportar Datos")
             
+            # Exportar a Excel en lugar de CSV
             excel_asegurados = io.BytesIO()
             with pd.ExcelWriter(excel_asegurados, engine='openpyxl') as writer:
                 df_mostrar_asegurados.to_excel(writer, sheet_name='Asegurados_PPDD', index=False)
@@ -1403,9 +1382,10 @@ with tab2:
                 promedio_por_microrred = total_asegurados / total_microrredes if total_microrredes > 0 else 0
                 st.metric("Promedio por Microrred", f"{promedio_por_microrred:,.0f}")
             
-            # Botón para descargar datos - YA ESTÁ EN EXCEL (SE MANTIENE)
+            # Botón para descargar datos
             st.subheader("💾 Exportar Datos")
             
+            # Exportar a Excel en lugar de CSV
             excel_microrred = io.BytesIO()
             with pd.ExcelWriter(excel_microrred, engine='openpyxl') as writer:
                 df_mostrar_microrred.to_excel(writer, sheet_name='Asegurados_Microrred', index=False)
@@ -1750,7 +1730,7 @@ with tab2:
                     max_asegurados = df_filtrado['Asegurados'].max() if len(df_filtrado) > 0 else 0
                     st.metric("Máximo Asegurados", f"{max_asegurados:,}")
             
-            # BOTÓN PARA DESCARGAR DATOS EN EXCEL - YA ESTÁ EN EXCEL (SE MANTIENE)
+            # BOTÓN PARA DESCARGAR DATOS EN EXCEL
             st.subheader("💾 Exportar Datos")
             
             col_exp1, col_exp2 = st.columns(2)
