@@ -35,43 +35,44 @@ def limpiar_y_preparar_dataframe(df, columnas_numericas):
     
     return df_limpio
 
+# CSS GLOBAL PARA TÍTULOS EN NEGRO
+st.markdown("""
+<style>
+    /* FORZAR TODOS LOS TÍTULOS A SER NEGROS */
+    h1, h2, h3, h4, h5, h6 {
+        color: black !important;
+        background: none !important;
+        -webkit-background-clip: initial !important;
+        -webkit-text-fill-color: black !important;
+        background-clip: initial !important;
+    }
+    
+    .stHeader {
+        color: black !important;
+    }
+    
+    /* Títulos específicos de Streamlit */
+    .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
+        color: black !important;
+        background: none !important;
+    }
+    
+    /* Sobrescribir cualquier otro estilo */
+    div[data-testid="stMarkdownContainer"] h1,
+    div[data-testid="stMarkdownContainer"] h2,
+    div[data-testid="stMarkdownContainer"] h3 {
+        color: black !important;
+        background: none !important;
+        -webkit-background-clip: initial !important;
+        -webkit-text-fill-color: black !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # 🟦 TAB 1: Dashboard Digitación
 with tab1:
     st.header("📈 Dashboard Digitación ARFSIS Web")
-    # CSS con !important y selector correcto
-    st.markdown("""
-    <style>
-    /* Contenedor principal */
-    .appview-container .main .block-container {
-        max-width: 1000px !important;   /* ✅ cambia este valor para ajustar el ancho */
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
-        margin: auto !important;
-    }
-
-    /* Responsive */
-    @media (min-width: 1600px) {
-        .appview-container .main .block-container {
-            max-width: 1300px !important;
-        }
-    }
-
-    @media (max-width: 1200px) {
-        .appview-container .main .block-container {
-            max-width: 90% !important;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .appview-container .main .block-container {
-            max-width: 100% !important;
-            padding-left: 0.5rem !important;
-            padding-right: 0.5rem !important;
-        }
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
+    
     # --- Cargar archivos desde Drive ---
     url_excel_digitacion = "https://drive.google.com/uc?id=1TvDHKdACvOyheNCdNGZ_nt_yZcaLrYrC"
     url_excel_mensual = "https://docs.google.com/spreadsheets/d/1UKKeYJ2XtzEkPvntDqQLUJUrg0NJCnvP/export?format=xlsx"    
@@ -354,7 +355,6 @@ with tab1:
             else:
                 st.warning("No se encontró la columna 'Indicador' para ordenar")
             
-            # Mostrar el listado de datos
             st.subheader("📊 Listado Detallado (Ordenado por Indicador - Mayor a Menor)")
             
             # Columnas a mostrar
@@ -502,7 +502,7 @@ with tab1:
                 st.error("No se encontraron las columnas especificadas en el dataset.")
                 st.write("Columnas disponibles en el dataset:", list(df_filtradomensual.columns))
 
-            # CSS GLOBAL MEJORADO
+            # CSS GLOBAL MEJORADO SOLO PARA ESTE LIENZO
             st.markdown("""
             <style>
             /* Hacer todo el texto de Streamlit más legible */
@@ -510,13 +510,14 @@ with tab1:
                 font-size: 16px !important;
             }
             
-            /* Títulos con gradiente */
+            /* Títulos en negro */
             h1, h2, h3 {
                 font-size: 24px !important;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
+                color: black !important;
+                background: none !important;
+                -webkit-background-clip: initial !important;
+                -webkit-text-fill-color: black !important;
+                background-clip: initial !important;
                 font-weight: bold !important;
             }
             
@@ -566,17 +567,6 @@ with tab1:
                 background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
                 border-radius: 10px !important;
                 padding: 15px !important;
-            }
-            
-            /* Mejorar el aspecto general de los widgets */
-            .st-bb, .st-at, .st-ae {
-                font-size: 14px !important;
-            }
-            
-            /* Efectos hover para todas las interacciones */
-            .element-container:hover {
-                transform: translateY(-1px);
-                transition: all 0.3s ease;
             }
             </style>
             """, unsafe_allow_html=True)
@@ -636,21 +626,6 @@ with tab1:
                 file_name=f"datos_mensuales_{mes_seleccionado}_{Año_seleccionado}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
-
-        # --- Pequeño script JS para volver a enfocar el selectbox ---
-        st.markdown(
-            """
-            <script>
-            const selects = parent.document.querySelectorAll('select');
-            if (selects.length > 0) {
-                // selecciona el último select (por si hay más de uno en la página)
-                const s = selects[selects.length - 1];
-                setTimeout(() => { s.focus(); }, 300);
-            }
-            </script>
-            """,
-            unsafe_allow_html=True
-        )
 
     # --- LIENZO 5: LISTADO DE DATOS ACUMULADOS ANUAL ---
     with st.expander("📊 **LISTADO DE DATOS ANUAL**", expanded=True):
@@ -719,7 +694,6 @@ with tab1:
                 else:
                     st.warning("No se encontró la columna 'Indicador' para ordenar")
                 
-                # Mostrar el listado de datos
                 st.subheader("📊 Listado Detallado (Ordenado por Indicador - Mayor a Menor)")
                 
                 # Columnas a mostrar
@@ -745,55 +719,77 @@ with tab1:
                             lambda x: f"{x:.1%}" if isinstance(x, (int, float)) and not pd.isna(x) else "N/A"
                         )
 
-                    # CREAR TABLA HTML CON TEXTO 9 PUNTOS MÁS PEQUEÑO
+                    # CREAR TABLA HTML MEJORADA CON AUTO-AJUSTE Y ESTILO MÁS LLAMATIVO (MISMO FORMATO QUE LIENZO 4)
                     html_table = """
-                    <div style="font-size: 17px; font-family: Arial, sans-serif;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 17px;">
+                    <div style="font-size: 17px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 17px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden;">
                         <thead>
-                            <tr style="background-color: #f0f2f6;">
+                            <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                     """
                     
-                    # Encabezados de la tabla
+                    # Encabezados de la tabla con auto-ajuste
                     for col in df_mostrar_formateado_ac.columns:
-                        html_table += f'<th style="padding: 9px; text-align: center; border: 2px solid #ddd; font-size: 21px; font-weight: bold;">{col}</th>'
+                        if col == 'N°':
+                            html_table += f'<th style="padding: 12px; text-align: center; border: 1px solid #ddd; font-size: 18px; font-weight: bold; width: 60px;">{col}</th>'
+                        elif col == 'CodPpdd':
+                            html_table += f'<th style="padding: 12px; text-align: center; border: 1px solid #ddd; font-size: 18px; font-weight: bold; width: 100px;">{col}</th>'
+                        elif col == 'Ppdd':
+                            html_table += f'<th style="padding: 12px; text-align: center; border: 1px solid #ddd; font-size: 18px; font-weight: bold; width: auto;">{col}</th>'
+                        elif col in ['Oportunos', 'Total_Fuas']:
+                            html_table += f'<th style="padding: 12px; text-align: center; border: 1px solid #ddd; font-size: 18px; font-weight: bold; width: 120px;">{col}</th>'
+                        elif col == 'Indicador':
+                            html_table += f'<th style="padding: 12px; text-align: center; border: 1px solid #ddd; font-size: 18px; font-weight: bold; width: 100px;">{col}</th>'
+                        else:
+                            html_table += f'<th style="padding: 12px; text-align: center; border: 1px solid #ddd; font-size: 18px; font-weight: bold; width: auto;">{col}</th>'
                     
                     html_table += "</tr></thead><tbody>"
                     
-                    # Filas de la tabla
-                    for _, row in df_mostrar_formateado_ac.iterrows():
-                        html_table += '<tr style="border: 1px solid #ddd;">'
+                    # Filas de la tabla con efecto hover
+                    for idx, row in df_mostrar_formateado_ac.iterrows():
+                        row_bg = "#f9f9f9" if idx % 2 == 0 else "#ffffff"
+                        html_table += f'<tr style="border: 1px solid #e0e0e0; background-color: {row_bg}; transition: all 0.3s ease;">'
                         
                         for i, (col, val) in enumerate(row.items()):
                             if col == 'Indicador':
                                 bg_color = obtener_color_indicador(val)
                                 text_color = obtener_color_texto(val)
-                                html_table += f'<td style="padding: 7px; text-align: center; border: 1px solid #ddd; font-size: 21px; font-weight: bold; background-color: {bg_color}; color: {text_color};">{val}</td>'
+                                html_table += f'<td style="padding: 10px; text-align: center; border: 1px solid #e0e0e0; font-size: 16px; font-weight: bold; background-color: {bg_color}; color: {text_color}; border-radius: 5px;">{val}</td>'
                             else:
-                                html_table += f'<td style="padding: 7px; text-align: center; border: 1px solid #ddd; font-size: 17px;">{val}</td>'
+                                html_table += f'<td style="padding: 10px; text-align: center; border: 1px solid #e0e0e0; font-size: 16px;">{val}</td>'
                         
                         html_table += '</tr>'
                     
-                    html_table += "</tbody></table></div>"
+                    html_table += """</tbody></table>
+                    <style>
+                        table tbody tr:hover {
+                            background-color: #f0f8ff !important;
+                            transform: translateY(-1px);
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        }
+                    </style>
+                    </div>"""
                     
-                    # MOSTRAR TABLA HTML
+                    # MOSTRAR TABLA HTML MEJORADA
                     st.markdown(html_table, unsafe_allow_html=True)
 
-                    # Leyenda de colores con texto 9 puntos más pequeño
+                    # Leyenda de colores con diseño mejorado (MISMO FORMATO QUE LIENZO 4)
                     st.markdown("""
-                    <div style="font-size: 17px; margin-top: 30px;">
-                    <strong>🎨 Leyenda de Indicadores:</strong><br>
-                    - <span style='color: white; background-color: #00b050; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 18px; margin: 5px; display: inline-block;'>Bueno (75-100%)</span>
-                    - <span style='color: black; background-color: #ffcc66; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 18px; margin: 5px; display: inline-block;'>Regular (60-74%)</span>
-                    - <span style='color: black; background-color: #ff7c80; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 18px; margin: 5px; display: inline-block;'>En Proceso (25-59%)</span>
-                    - <span style='color: white; background-color: #ff0000; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 18px; margin: 5px; display: inline-block;'>Malo (0-24%)</span>
-                    - <span style='color: black; background-color: lightgray; padding: 1px 5px; border-radius: 5px; font-weight: bold; font-size: 18px; margin: 5px; display: inline-block;'>Datos Inválidos</span>
+                    <div style="font-size: 16px; margin-top: 30px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <strong style="font-size: 18px; color: #2c3e50;">🎨 Leyenda de Indicadores:</strong><br><br>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                        <span style='color: white; background-color: #00b050; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>Bueno (75-100%)</span>
+                        <span style='color: black; background-color: #ffcc66; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>Regular (60-74%)</span>
+                        <span style='color: black; background-color: #ff7c80; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>En Proceso (25-59%)</span>
+                        <span style='color: white; background-color: #ff0000; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>Malo (0-24%)</span>
+                        <span style='color: black; background-color: lightgray; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>Datos Inválidos</span>
+                    </div>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Mostrar información adicional con texto 9 puntos más pequeño
+                    # Mostrar información adicional con estilo mejorado
                     st.markdown(f"""
-                    <div style="font-size: 13px; background-color: #e6f3ff; padding: 5px; border-radius: 5px; margin: 20px 0;">
-                    ℹ️ Mostrando {len(df_mostrar_anual)} registros del mes {mes_seleccionado_ac} del Año {Año_seleccionado_ac}, ordenados por Indicador (mayor a menor).
+                    <div style="font-size: 14px; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 12px; border-radius: 8px; margin: 20px 0; border-left: 5px solid #2196f3; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <strong>ℹ️ Información:</strong> Mostrando {len(df_mostrar_anual)} registros del mes {mes_seleccionado_ac} del Año {Año_seleccionado_ac}, ordenados por Indicador (mayor a menor).
                     </div>
                     """, unsafe_allow_html=True)
                     
@@ -801,40 +797,116 @@ with tab1:
                     st.error("No se encontraron las columnas especificadas en el dataset.")
                     st.write("Columnas disponibles en el dataset:", list(df_filtradoanual.columns))
 
-                # MOSTRAR MÉTRICAS DE RESUMEN
+                # CSS GLOBAL MEJORADO SOLO PARA ESTE LIENZO (MISMO FORMATO QUE LIENZO 4)
+                st.markdown("""
+                <style>
+                /* Hacer todo el texto de Streamlit más legible */
+                .stApp {
+                    font-size: 16px !important;
+                }
+                
+                /* Títulos en negro */
+                h1, h2, h3 {
+                    font-size: 24px !important;
+                    color: black !important;
+                    background: none !important;
+                    -webkit-background-clip: initial !important;
+                    -webkit-text-fill-color: black !important;
+                    background-clip: initial !important;
+                    font-weight: bold !important;
+                }
+                
+                /* Métricas con estilo mejorado */
+                [data-testid="stMetricLabel"] {
+                    font-size: 14px !important;
+                    font-weight: bold !important;
+                    color: #2c3e50 !important;
+                }
+                [data-testid="stMetricValue"] {
+                    font-size: 28px !important;
+                    font-weight: bold !important;
+                }
+                [data-testid="stMetricDelta"] {
+                    font-size: 14px !important;
+                    font-weight: bold !important;
+                }
+                
+                /* Selectboxes y controles mejorados */
+                .stSelectbox label, .stSlider label {
+                    font-size: 14px !important;
+                    font-weight: bold !important;
+                    color: #2c3e50 !important;
+                }
+                
+                /* Botones con estilo moderno */
+                .stDownloadButton button {
+                    font-size: 14px !important;
+                    padding: 10px 20px !important;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                    color: white !important;
+                    border: none !important;
+                    border-radius: 25px !important;
+                    font-weight: bold !important;
+                    transition: all 0.3s ease !important;
+                }
+                
+                .stDownloadButton button:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+                }
+                
+                /* Expander con estilo mejorado */
+                .streamlit-expanderHeader {
+                    font-size: 18px !important;
+                    font-weight: bold !important;
+                    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
+                    border-radius: 10px !important;
+                    padding: 15px !important;
+                }
+                </style>
+                """, unsafe_allow_html=True)
+
+                # MOSTRAR MÉTRICAS DE RESUMEN CON ESTILO MEJORADO (MISMO FORMATO QUE LIENZO 4)
                 st.subheader(f"📈 Resumen - Mes {mes_seleccionado_ac} / Año {Año_seleccionado_ac}")
+                
+                # Contenedor para métricas con fondo gradiente
+                st.markdown("""
+                <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                """, unsafe_allow_html=True)
                 
                 col1, col2, col3, col4 = st.columns(4)
                 
                 with col1:
                     total_registros = len(df_filtradoanual)
-                    st.metric("Total de Registros", f"{total_registros:,}")
+                    st.metric("Total de Registros", f"{total_registros:,}", delta_color="off")
                 
                 with col2:
                     if 'Oportunos' in df_filtradoanual.columns:
                         oportunos_numerico = pd.to_numeric(df_filtradoanual['Oportunos'], errors='coerce').fillna(0)
                         total_oportunos = int(oportunos_numerico.sum())
-                        st.metric("Total Oportunos", f"{total_oportunos:,}")
+                        st.metric("Total Oportunos", f"{total_oportunos:,}", delta_color="off")
                     else:
-                        st.metric("Total Oportunos", "N/A")
+                        st.metric("Total Oportunos", "N/A", delta_color="off")
                 
                 with col3:
                     if 'Total_Fuas' in df_filtradoanual.columns:
                         fuas_numerico = pd.to_numeric(df_filtradoanual['Total_Fuas'], errors='coerce').fillna(0)
                         total_fuas = int(fuas_numerico.sum())
-                        st.metric("Total FUAS", f"{total_fuas:,}")
+                        st.metric("Total FUAS", f"{total_fuas:,}", delta_color="off")
                     else:
-                        st.metric("Total FUAS", "N/A")
+                        st.metric("Total FUAS", "N/A", delta_color="off")
                 
                 with col4:
                     if 'Indicador' in df_filtradoanual.columns:
                         indicador_numerico = pd.to_numeric(df_filtradoanual['Indicador'], errors='coerce')
                         indicador_promedio = indicador_numerico.mean() * 100
-                        st.metric("Indicador Promedio", f"{indicador_promedio:.1f}%")
+                        st.metric("Indicador Promedio", f"{indicador_promedio:.1f}%", delta_color="off")
                     else:
-                        st.metric("Indicador Promedio", "N/A")
+                        st.metric("Indicador Promedio", "N/A", delta_color="off")
                 
-                # Botón para descargar datos - CAMBIADO A XLSX
+                st.markdown("</div>", unsafe_allow_html=True)
+                
+                # Botón para descargar datos - CON ESTILO MEJORADO (MISMO FORMATO QUE LIENZO 4)
                 st.subheader("💾 Exportar Datos Filtrados")
                 
                 # Crear archivo Excel en memoria
@@ -966,7 +1038,7 @@ with tab2:
     df_resumen_aseg_por_mic.columns = df_resumen_aseg_por_mic.columns.str.strip()
 
     # LIENZO 7 ASEGURADOS POR PUNTOS DE DIGITACION
-    st.header("👥 Asegurados por Punto de Digitación")
+    # st.header("👥 Asegurados por Punto de Digitación")
     
     # Verificar si hay datos disponibles y que sea un DataFrame
     if (not hasattr(df_resumen_aseg_por_ppdd, 'columns') or 
@@ -1115,25 +1187,6 @@ with tab2:
             
             # Mostrar métricas resumen
             st.subheader("📊 Resumen de Asegurados")
-            
-            # CSS para las métricas con fuente más grande
-            st.markdown("""
-            <style>
-            .stMetric {
-                font-family: 'Bahnschrift Light', 'Segoe UI', sans-serif !important;
-            }
-            .stMetric label {
-                font-family: 'Bahnschrift Light', 'Segoe UI', sans-serif !important;
-                font-weight: 300 !important;
-                font-size: 16px !important;
-            }
-            .stMetric value {
-                font-family: 'Bahnschrift Light', 'Segoe UI', sans-serif !important;
-                font-weight: 400 !important;
-                font-size: 18px !important;
-            }
-            </style>
-            """, unsafe_allow_html=True)
             
             col1, col2, col3 = st.columns(3)
             
