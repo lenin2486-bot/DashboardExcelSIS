@@ -292,340 +292,406 @@ with tab1:
         else:
             st.info("Por favor selecciona al menos una persona para visualizar el gráfico.")
 
-    # --- LIENZO 4: LISTADO DE DATOS MENSUALES MEJORADO ---
-    with st.expander("📊 **LISTADO DE DATOS MENSUALES**", expanded=True):
-        st.subheader("📋 Listado Completo de Datos Mensuales")
+# --- LIENZO 4: LISTADO DE DATOS MENSUALES MEJORADO ---
+with st.expander("📊 **LISTADO DE DATOS MENSUALES**", expanded=True):
+    st.subheader("📋 Listado Completo de Datos Mensuales")
+    
+    # Verificar si hay datos en el dataset anual
+    if df_mensual.empty or len(df_mensual) == 0:
+        st.warning("No hay datos disponibles en el dataset mensual.")
+    else:
+        # Filtros por mes y Año
+        col1, col2 = st.columns(2)
         
-        # Verificar si hay datos en el dataset anual
-        if df_mensual.empty or len(df_mensual) == 0:
-            st.warning("No hay datos disponibles en el dataset mensual.")
+        with col1:
+            # Obtener meses disponibles ordenados
+            orden_meses = [
+                "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+            ]
+
+            # Filtrar solo los meses que existen en el DataFrame
+            meses_disponibles = df_mensual["Mes"].dropna().unique()
+
+            # Ordenar los meses según el orden natural
+            meses_disponibles = sorted(
+                [m for m in meses_disponibles if m in orden_meses],
+                key=lambda x: orden_meses.index(x)
+            )
+
+            mes_seleccionado = st.selectbox(
+                "📅 Seleccione el mes:",
+                options=meses_disponibles,
+                key="mes_mensual",
+                index=meses_disponibles.index("Enero") if "Enero" in meses_disponibles else 0
+            )
+        
+        with col2:
+            # Obtener Años disponibles ordenados
+            if 'Año' in df_mensual.columns:
+                Años_disponibles = sorted(df_mensual['Año'].unique())
+                Año_seleccionado = st.selectbox(
+                    "Selecciona el Año", 
+                    options=Años_disponibles,
+                    key="anio_mensual",
+                    index=len(Años_disponibles)-1 if len(Años_disponibles) > 0 else 0
+                )
+            else:
+                st.error("No se encontró la columna 'Año' en los datos")
+                Año_seleccionado = None
+        
+        # Aplicar filtros
+        if mes_seleccionado and Año_seleccionado and 'Mes' in df_mensual.columns and 'Año' in df_mensual.columns:
+            df_filtradomensual = df_mensual[
+                (df_mensual['Mes'] == mes_seleccionado) & 
+                (df_mensual['Año'] == Año_seleccionado)
+            ].copy()
         else:
-            # Filtros por mes y Año
-            col1, col2 = st.columns(2)
+            df_filtradomensual = df_mensual.copy()
+        
+        # Ordenar por Indicador de mayor a menor si la columna existe
+        if 'Indicador' in df_filtradomensual.columns:
+            df_filtradomensual = df_filtradomensual.sort_values('Indicador', ascending=False)
+        else:
+            st.warning("No se encontró la columna 'Indicador' para ordenar")
+        
+        st.subheader("📊 Listado Detallado (Ordenado por Indicador - Mayor a Menor)")
+        
+        # Columnas a mostrar
+        columnas_a_mostrar = ['CodPpdd', 'Ppdd', 'Oportunos', 'Total_Fuas', 'Indicador']
+        
+        # Verificar que las columnas existan en el DataFrame
+        columnas_existentes = [col for col in columnas_a_mostrar if col in df_filtradomensual.columns]
+        
+        if columnas_existentes:
+            # Preparar DataFrame para mostrar
+            df_mostrar_mensual = df_filtradomensual[columnas_existentes].copy().head(23)
+            df_mostrar_mensual = df_mostrar_mensual.reset_index(drop=True)
+            df_mostrar_mensual.insert(0, "N°", range(1, len(df_mostrar_mensual) + 1))
+
+            # LIMPIAR DATOS NUMÉRICOS
+            columnas_numericas = ["N°", "CodPpdd", "Oportunos", "Total_Fuas", "Indicador"]
+            df_mostrar_mensual = limpiar_y_preparar_dataframe(df_mostrar_mensual, columnas_numericas)
             
-            with col1:
-                # Obtener meses disponibles ordenados
-                orden_meses = [
-                    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-                ]
-
-                # Filtrar solo los meses que existen en el DataFrame
-                meses_disponibles = df_mensual["Mes"].dropna().unique()
-
-                # Ordenar los meses según el orden natural
-                meses_disponibles = sorted(
-                    [m for m in meses_disponibles if m in orden_meses],
-                    key=lambda x: orden_meses.index(x)
+            # Crear una versión para mostrar con el indicador formateado como porcentaje
+            df_mostrar_formateado = df_mostrar_mensual.copy()
+            if 'Indicador' in df_mostrar_formateado.columns:
+                df_mostrar_formateado['Indicador'] = df_mostrar_formateado['Indicador'].apply(
+                    lambda x: f"{x:.1%}" if isinstance(x, (int, float)) and not pd.isna(x) else "N/A"
                 )
 
-                mes_seleccionado = st.selectbox(
-                    "📅 Seleccione el mes:",
-                    options=meses_disponibles,
-                    key="mes_mensual",
-                    index=meses_disponibles.index("Enero") if "Enero" in meses_disponibles else 0
-                )
-            
-            with col2:
-                # Obtener Años disponibles ordenados
-                if 'Año' in df_mensual.columns:
-                    Años_disponibles = sorted(df_mensual['Año'].unique())
-                    Año_seleccionado = st.selectbox(
-                        "Selecciona el Año", 
-                        options=Años_disponibles,
-                        key="anio_mensual",
-                        index=len(Años_disponibles)-1 if len(Años_disponibles) > 0 else 0
-                    )
-                else:
-                    st.error("No se encontró la columna 'Año' en los datos")
-                    Año_seleccionado = None
-            
-            # Aplicar filtros
-            if mes_seleccionado and Año_seleccionado and 'Mes' in df_mensual.columns and 'Año' in df_mensual.columns:
-                df_filtradomensual = df_mensual[
-                    (df_mensual['Mes'] == mes_seleccionado) & 
-                    (df_mensual['Año'] == Año_seleccionado)
-                ].copy()
-            else:
-                df_filtradomensual = df_mensual.copy()
-            
-            # Ordenar por Indicador de mayor a menor si la columna existe
-            if 'Indicador' in df_filtradomensual.columns:
-                df_filtradomensual = df_filtradomensual.sort_values('Indicador', ascending=False)
-            else:
-                st.warning("No se encontró la columna 'Indicador' para ordenar")
-            
-            st.subheader("📊 Listado Detallado (Ordenado por Indicador - Mayor a Menor)")
-            
-            # Columnas a mostrar
-            columnas_a_mostrar = ['CodPpdd', 'Ppdd', 'Oportunos', 'Total_Fuas', 'Indicador']
-            
-            # Verificar que las columnas existan en el DataFrame
-            columnas_existentes = [col for col in columnas_a_mostrar if col in df_filtradomensual.columns]
-            
-            if columnas_existentes:
-                # Preparar DataFrame para mostrar
-                df_mostrar_mensual = df_filtradomensual[columnas_existentes].copy().head(23)
-                df_mostrar_mensual = df_mostrar_mensual.reset_index(drop=True)
-                df_mostrar_mensual.insert(0, "N°", range(1, len(df_mostrar_mensual) + 1))
-
-                # LIMPIAR DATOS NUMÉRICOS
-                columnas_numericas = ["N°", "CodPpdd", "Oportunos", "Total_Fuas", "Indicador"]
-                df_mostrar_mensual = limpiar_y_preparar_dataframe(df_mostrar_mensual, columnas_numericas)
+            # FUNCIÓN PARA DETERMINAR COLOR DEL INDICADOR
+            def obtener_color_indicador(val):
+                if val == 'N/A' or val is None:
+                    return 'lightgray'
                 
-                # Crear una versión para mostrar con el indicador formateado como porcentaje
-                df_mostrar_formateado = df_mostrar_mensual.copy()
-                if 'Indicador' in df_mostrar_formateado.columns:
-                    df_mostrar_formateado['Indicador'] = df_mostrar_formateado['Indicador'].apply(
-                        lambda x: f"{x:.1%}" if isinstance(x, (int, float)) and not pd.isna(x) else "N/A"
-                    )
-
-                # FUNCIÓN PARA DETERMINAR COLOR DEL INDICADOR
-                def obtener_color_indicador(val):
-                    if val == 'N/A' or val is None:
-                        return 'lightgray'
-                    
-                    try:
-                        if isinstance(val, str) and '%' in val:
-                            num_val = float(val.replace('%', '')) / 100
-                        else:
-                            num_val = float(val)
-                        
-                        if num_val >= 0.75:
-                            return '#00b050'
-                        elif num_val >= 0.60:
-                            return '#ffcc66'
-                        elif num_val >= 0.25:
-                            return '#ff7c80'
-                        else:
-                            return '#ff0000'
-                    except (ValueError, TypeError):
-                        return 'lightgray'
-
-                # FUNCIÓN PARA DETERMINAR COLOR DE TEXTO
-                def obtener_color_texto(val):
-                    if val == 'N/A' or val is None:
-                        return 'black'
-                    
-                    try:
-                        if isinstance(val, str) and '%' in val:
-                            num_val = float(val.replace('%', '')) / 100
-                        else:
-                            num_val = float(val)
-                        
-                        if num_val >= 0.75:
-                            return 'white'
-                        elif num_val >= 0.60:
-                            return 'black'
-                        elif num_val >= 0.25:
-                            return 'black'
-                        else:
-                            return 'white'
-                    except (ValueError, TypeError):
-                        return 'black'
-
-                # CREAR TABLA HTML MEJORADA CON AUTO-AJUSTE Y ESTILO MÁS LLAMATIVO
-                html_table = """
-                <div style="font-size: 17px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 17px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden;">
-                    <thead>
-                        <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                """
-                
-                # Encabezados de la tabla con auto-ajuste
-                for col in df_mostrar_formateado.columns:
-                    if col == 'N°':
-                        html_table += f'<th style="padding: 12px; text-align: center; border: 1px solid #ddd; font-size: 18px; font-weight: bold; width: 60px;">{col}</th>'
-                    elif col == 'CodPpdd':
-                        html_table += f'<th style="padding: 12px; text-align: center; border: 1px solid #ddd; font-size: 18px; font-weight: bold; width: 100px;">{col}</th>'
-                    elif col == 'Ppdd':
-                        html_table += f'<th style="padding: 12px; text-align: center; border: 1px solid #ddd; font-size: 18px; font-weight: bold; width: auto;">{col}</th>'
-                    elif col in ['Oportunos', 'Total_Fuas']:
-                        html_table += f'<th style="padding: 12px; text-align: center; border: 1px solid #ddd; font-size: 18px; font-weight: bold; width: 120px;">{col}</th>'
-                    elif col == 'Indicador':
-                        html_table += f'<th style="padding: 12px; text-align: center; border: 1px solid #ddd; font-size: 18px; font-weight: bold; width: 100px;">{col}</th>'
+                try:
+                    if isinstance(val, str) and '%' in val:
+                        num_val = float(val.replace('%', '')) / 100
                     else:
-                        html_table += f'<th style="padding: 12px; text-align: center; border: 1px solid #ddd; font-size: 18px; font-weight: bold; width: auto;">{col}</th>'
-                
-                html_table += "</tr></thead><tbody>"
-                
-                # Filas de la tabla con efecto hover
-                for idx, row in df_mostrar_formateado.iterrows():
-                    row_bg = "#f9f9f9" if idx % 2 == 0 else "#ffffff"
-                    html_table += f'<tr style="border: 1px solid #e0e0e0; background-color: {row_bg}; transition: all 0.3s ease;">'
+                        num_val = float(val)
                     
-                    for i, (col, val) in enumerate(row.items()):
-                        if col == 'Indicador':
-                            bg_color = obtener_color_indicador(val)
-                            text_color = obtener_color_texto(val)
-                            html_table += f'<td style="padding: 10px; text-align: center; border: 1px solid #e0e0e0; font-size: 16px; font-weight: bold; background-color: {bg_color}; color: {text_color}; border-radius: 5px;">{val}</td>'
-                        else:
-                            html_table += f'<td style="padding: 10px; text-align: center; border: 1px solid #e0e0e0; font-size: 16px;">{val}</td>'
+                    if num_val >= 0.75:
+                        return '#00b050'
+                    elif num_val >= 0.60:
+                        return '#ffcc66'
+                    elif num_val >= 0.25:
+                        return '#ff7c80'
+                    else:
+                        return '#ff0000'
+                except (ValueError, TypeError):
+                    return 'lightgray'
+
+            # FUNCIÓN PARA DETERMINAR COLOR DE TEXTO
+            def obtener_color_texto(val):
+                if val == 'N/A' or val is None:
+                    return 'black'
+                
+                try:
+                    if isinstance(val, str) and '%' in val:
+                        num_val = float(val.replace('%', '')) / 100
+                    else:
+                        num_val = float(val)
                     
-                    html_table += '</tr>'
-                
-                html_table += """</tbody></table>
-                <style>
-                    table tbody tr:hover {
-                        background-color: #f0f8ff !important;
-                        transform: translateY(-1px);
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                    }
-                </style>
-                </div>"""
-                
-                # MOSTRAR TABLA HTML MEJORADA
-                st.markdown(html_table, unsafe_allow_html=True)
+                    if num_val >= 0.75:
+                        return 'white'
+                    elif num_val >= 0.60:
+                        return 'black'
+                    elif num_val >= 0.25:
+                        return 'black'
+                    else:
+                        return 'white'
+                except (ValueError, TypeError):
+                    return 'black'
 
-                # Leyenda de colores con diseño mejorado
-                st.markdown("""
-                <div style="font-size: 16px; margin-top: 30px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                <strong style="font-size: 18px; color: #2c3e50;">🎨 Leyenda de Indicadores:</strong><br><br>
-                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                    <span style='color: white; background-color: #00b050; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>Bueno (75-100%)</span>
-                    <span style='color: black; background-color: #ffcc66; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>Regular (60-74%)</span>
-                    <span style='color: black; background-color: #ff7c80; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>En Proceso (25-59%)</span>
-                    <span style='color: white; background-color: #ff0000; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>Malo (0-24%)</span>
-                    <span style='color: black; background-color: lightgray; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>Datos Inválidos</span>
-                </div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Mostrar información adicional con estilo mejorado
-                st.markdown(f"""
-                <div style="font-size: 14px; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 12px; border-radius: 8px; margin: 20px 0; border-left: 5px solid #2196f3; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                <strong>ℹ️ Información:</strong> Mostrando {len(df_mostrar_mensual)} registros del mes {mes_seleccionado} del Año {Año_seleccionado}, ordenados por Indicador (mayor a menor).
-                </div>
-                """, unsafe_allow_html=True)
-                
-            else:
-                st.error("No se encontraron las columnas especificadas en el dataset.")
-                st.write("Columnas disponibles en el dataset:", list(df_filtradomensual.columns))
-
-            # CSS GLOBAL MEJORADO SOLO PARA ESTE LIENZO
+            # CSS CRÍTICO PARA PERMITIR ZOOM EN MÓVIL
             st.markdown("""
             <style>
-            /* Hacer todo el texto de Streamlit más legible */
-            .stApp {
-                font-size: 16px !important;
+            /* PERMITIR ZOOM EN DISPOSITIVOS MÓVILES */
+            @media (max-width: 768px) {
+                .main .block-container {
+                    touch-action: pan-x pan-y pinch-zoom !important;
+                    max-width: 100% !important;
+                    padding: 1rem !important;
+                }
+                
+                /* Hacer la tabla responsive y permitir zoom */
+                .zoomable-table {
+                    touch-action: pan-x pan-y pinch-zoom !important;
+                    overflow: auto !important;
+                    max-width: 100% !important;
+                    -webkit-text-size-adjust: 100% !important;
+                    text-size-adjust: 100% !important;
+                }
+                
+                /* Asegurar que los elementos internos sean escalables */
+                .zoomable-table table {
+                    touch-action: pan-x pan-y pinch-zoom !important;
+                    min-width: 600px !important; /* Ancho mínimo para permitir zoom */
+                }
+                
+                /* Permitir zoom en todo el contenido */
+                body {
+                    touch-action: pan-x pan-y pinch-zoom !important;
+                    -webkit-user-scalable: yes !important;
+                    user-scalable: yes !important;
+                }
             }
             
-            /* Títulos en negro */
-            h1, h2, h3 {
-                font-size: 24px !important;
-                color: black !important;
-                background: none !important;
-                -webkit-background-clip: initial !important;
-                -webkit-text-fill-color: black !important;
-                background-clip: initial !important;
-                font-weight: bold !important;
-            }
-            
-            /* Métricas con estilo mejorado */
-            [data-testid="stMetricLabel"] {
-                font-size: 14px !important;
-                font-weight: bold !important;
-                color: #2c3e50 !important;
-            }
-            [data-testid="stMetricValue"] {
-                font-size: 28px !important;
-                font-weight: bold !important;
-            }
-            [data-testid="stMetricDelta"] {
-                font-size: 14px !important;
-                font-weight: bold !important;
-            }
-            
-            /* Selectboxes y controles mejorados */
-            .stSelectbox label, .stSlider label {
-                font-size: 14px !important;
-                font-weight: bold !important;
-                color: #2c3e50 !important;
-            }
-            
-            /* Botones con estilo moderno */
-            .stDownloadButton button {
-                font-size: 14px !important;
-                padding: 10px 20px !important;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-                color: white !important;
-                border: none !important;
-                border-radius: 25px !important;
-                font-weight: bold !important;
-                transition: all 0.3s ease !important;
-            }
-            
-            .stDownloadButton button:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
-            }
-            
-            /* Expander con estilo mejorado */
-            .streamlit-expanderHeader {
-                font-size: 18px !important;
-                font-weight: bold !important;
-                background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
-                border-radius: 10px !important;
-                padding: 15px !important;
+            /* Estilos base para desktop */
+            .zoomable-table {
+                width: 100%;
+                overflow-x: auto;
             }
             </style>
             """, unsafe_allow_html=True)
 
-            # MOSTRAR MÉTRICAS DE RESUMEN CON ESTILO MEJORADO
-            st.subheader(f"📈 Resumen - Mes {mes_seleccionado} / Año {Año_seleccionado}")
+            # CREAR TABLA HTML MEJORADA CON CLASE ZOOMABLE
+            html_table = """
+            <div class="zoomable-table" style="font-size: 17px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: pan-x pan-y pinch-zoom;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 17px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden; min-width: 600px;">
+                <thead>
+                    <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            """
             
-            # Contenedor para métricas con fondo gradiente
+            # Encabezados de la tabla con auto-ajuste
+            for col in df_mostrar_formateado.columns:
+                if col == 'N°':
+                    html_table += f'<th style="padding: 12px; text-align: center; border: 1px solid #ddd; font-size: 18px; font-weight: bold; width: 60px;">{col}</th>'
+                elif col == 'CodPpdd':
+                    html_table += f'<th style="padding: 12px; text-align: center; border: 1px solid #ddd; font-size: 18px; font-weight: bold; width: 100px;">{col}</th>'
+                elif col == 'Ppdd':
+                    html_table += f'<th style="padding: 12px; text-align: center; border: 1px solid #ddd; font-size: 18px; font-weight: bold; width: auto;">{col}</th>'
+                elif col in ['Oportunos', 'Total_Fuas']:
+                    html_table += f'<th style="padding: 12px; text-align: center; border: 1px solid #ddd; font-size: 18px; font-weight: bold; width: 120px;">{col}</th>'
+                elif col == 'Indicador':
+                    html_table += f'<th style="padding: 12px; text-align: center; border: 1px solid #ddd; font-size: 18px; font-weight: bold; width: 100px;">{col}</th>'
+                else:
+                    html_table += f'<th style="padding: 12px; text-align: center; border: 1px solid #ddd; font-size: 18px; font-weight: bold; width: auto;">{col}</th>'
+            
+            html_table += "</tr></thead><tbody>"
+            
+            # Filas de la tabla con efecto hover
+            for idx, row in df_mostrar_formateado.iterrows():
+                row_bg = "#f9f9f9" if idx % 2 == 0 else "#ffffff"
+                html_table += f'<tr style="border: 1px solid #e0e0e0; background-color: {row_bg}; transition: all 0.3s ease;">'
+                
+                for i, (col, val) in enumerate(row.items()):
+                    if col == 'Indicador':
+                        bg_color = obtener_color_indicador(val)
+                        text_color = obtener_color_texto(val)
+                        html_table += f'<td style="padding: 10px; text-align: center; border: 1px solid #e0e0e0; font-size: 16px; font-weight: bold; background-color: {bg_color}; color: {text_color}; border-radius: 5px;">{val}</td>'
+                    else:
+                        html_table += f'<td style="padding: 10px; text-align: center; border: 1px solid #e0e0e0; font-size: 16px;">{val}</td>'
+                
+                html_table += '</tr>'
+            
+            html_table += """</tbody></table>
+            <style>
+                table tbody tr:hover {
+                    background-color: #f0f8ff !important;
+                    transform: translateY(-1px);
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+            </style>
+            </div>"""
+            
+            # MOSTRAR TABLA HTML MEJORADA
+            st.markdown(html_table, unsafe_allow_html=True)
+
+            # Leyenda de colores con diseño mejorado
             st.markdown("""
-            <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+            <div style="font-size: 16px; margin-top: 30px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); touch-action: pan-x pan-y pinch-zoom;">
+            <strong style="font-size: 18px; color: #2c3e50;">🎨 Leyenda de Indicadores:</strong><br><br>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                <span style='color: white; background-color: #00b050; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>Bueno (75-100%)</span>
+                <span style='color: black; background-color: #ffcc66; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>Regular (60-74%)</span>
+                <span style='color: black; background-color: #ff7c80; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>En Proceso (25-59%)</span>
+                <span style='color: white; background-color: #ff0000; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>Malo (0-24%)</span>
+                <span style='color: black; background-color: lightgray; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>Datos Inválidos</span>
+            </div>
+            </div>
             """, unsafe_allow_html=True)
             
-            col1, col2, col3, col4 = st.columns(4)
+            # Mostrar información adicional con estilo mejorado
+            st.markdown(f"""
+            <div style="font-size: 14px; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 12px; border-radius: 8px; margin: 20px 0; border-left: 5px solid #2196f3; box-shadow: 0 2px 4px rgba(0,0,0,0.1); touch-action: pan-x pan-y pinch-zoom;">
+            <strong>ℹ️ Información:</strong> Mostrando {len(df_mostrar_mensual)} registros del mes {mes_seleccionado} del Año {Año_seleccionado}, ordenados por Indicador (mayor a menor).
+            </div>
+            """, unsafe_allow_html=True)
             
-            with col1:
-                total_registros = len(df_filtradomensual)
-                st.metric("Total de Registros", f"{total_registros:,}", delta_color="off")
+        else:
+            st.error("No se encontraron las columnas especificadas en el dataset.")
+            st.write("Columnas disponibles en el dataset:", list(df_filtradomensual.columns))
+
+        # CSS GLOBAL MEJORADO SOLO PARA ESTE LIENZO - CON SOPORTE PARA ZOOM
+        st.markdown("""
+        <style>
+        /* PERMITIR ZOOM EN DISPOSITIVOS MÓVILES */
+        @media (max-width: 768px) {
+            .main .block-container {
+                touch-action: pan-x pan-y pinch-zoom !important;
+                max-width: 100% !important;
+                padding: 1rem !important;
+            }
             
-            with col2:
-                if 'Oportunos' in df_filtradomensual.columns:
-                    oportunos_numerico = pd.to_numeric(df_filtradomensual['Oportunos'], errors='coerce').fillna(0)
-                    total_oportunos = int(oportunos_numerico.sum())
-                    st.metric("Total Oportunos", f"{total_oportunos:,}", delta_color="off")
-                else:
-                    st.metric("Total Oportunos", "N/A", delta_color="off")
+            /* Permitir zoom en todo el contenido */
+            body {
+                touch-action: pan-x pan-y pinch-zoom !important;
+                -webkit-user-scalable: yes !important;
+                user-scalable: yes !important;
+                max-zoom: 5 !important;
+                min-zoom: 0.1 !important;
+            }
             
-            with col3:
-                if 'Total_Fuas' in df_filtradomensual.columns:
-                    fuas_numerico = pd.to_numeric(df_filtradomensual['Total_Fuas'], errors='coerce').fillna(0)
-                    total_fuas = int(fuas_numerico.sum())
-                    st.metric("Total FUAS", f"{total_fuas:,}", delta_color="off")
-                else:
-                    st.metric("Total FUAS", "N/A", delta_color="off")
-            
-            with col4:
-                if 'Indicador' in df_filtradomensual.columns:
-                    indicador_numerico = pd.to_numeric(df_filtradomensual['Indicador'], errors='coerce')
-                    indicador_promedio = indicador_numerico.mean() * 100
-                    st.metric("Indicador Promedio", f"{indicador_promedio:.1f}%", delta_color="off")
-                else:
-                    st.metric("Indicador Promedio", "N/A", delta_color="off")
-            
-            st.markdown("</div>", unsafe_allow_html=True)
-            
-            # Botón para descargar datos - CON ESTILO MEJORADO
-            st.subheader("💾 Exportar Datos Filtrados")
-            
-            # Crear archivo Excel en memoria
-            excel_buffer = BytesIO()
-            with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-                df_filtradomensual.to_excel(writer, sheet_name='Datos_Mensuales', index=False)
-            excel_buffer.seek(0)
-            
-            st.download_button(
-                label="📥 Descargar listado filtrado en Excel",
-                data=excel_buffer,
-                file_name=f"datos_mensuales_{mes_seleccionado}_{Año_seleccionado}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+            /* Hacer todo el texto de Streamlit más legible y escalable */
+            .stApp {
+                font-size: 16px !important;
+                touch-action: pan-x pan-y pinch-zoom !important;
+            }
+        }
+        
+        /* Hacer todo el texto de Streamlit más legible */
+        .stApp {
+            font-size: 16px !important;
+        }
+        
+        /* Títulos en negro */
+        h1, h2, h3 {
+            font-size: 24px !important;
+            color: black !important;
+            background: none !important;
+            -webkit-background-clip: initial !important;
+            -webkit-text-fill-color: black !important;
+            background-clip: initial !important;
+            font-weight: bold !important;
+        }
+        
+        /* Métricas con estilo mejorado */
+        [data-testid="stMetricLabel"] {
+            font-size: 14px !important;
+            font-weight: bold !important;
+            color: #2c3e50 !important;
+        }
+        [data-testid="stMetricValue"] {
+            font-size: 28px !important;
+            font-weight: bold !important;
+        }
+        [data-testid="stMetricDelta"] {
+            font-size: 14px !important;
+            font-weight: bold !important;
+        }
+        
+        /* Selectboxes y controles mejorados */
+        .stSelectbox label, .stSlider label {
+            font-size: 14px !important;
+            font-weight: bold !important;
+            color: #2c3e50 !important;
+        }
+        
+        /* Botones con estilo moderno */
+        .stDownloadButton button {
+            font-size: 14px !important;
+            padding: 10px 20px !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 25px !important;
+            font-weight: bold !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .stDownloadButton button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+        }
+        
+        /* Expander con estilo mejorado */
+        .streamlit-expanderHeader {
+            font-size: 18px !important;
+            font-weight: bold !important;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
+            border-radius: 10px !important;
+            padding: 15px !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+        # MOSTRAR MÉTRICAS DE RESUMEN CON ESTILO MEJORADO
+        st.subheader(f"📈 Resumen - Mes {mes_seleccionado} / Año {Año_seleccionado}")
+        
+        # Contenedor para métricas con fondo gradiente
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); touch-action: pan-x pan-y pinch-zoom;">
+        """, unsafe_allow_html=True)
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            total_registros = len(df_filtradomensual)
+            st.metric("Total de Registros", f"{total_registros:,}", delta_color="off")
+        
+        with col2:
+            if 'Oportunos' in df_filtradomensual.columns:
+                oportunos_numerico = pd.to_numeric(df_filtradomensual['Oportunos'], errors='coerce').fillna(0)
+                total_oportunos = int(oportunos_numerico.sum())
+                st.metric("Total Oportunos", f"{total_oportunos:,}", delta_color="off")
+            else:
+                st.metric("Total Oportunos", "N/A", delta_color="off")
+        
+        with col3:
+            if 'Total_Fuas' in df_filtradomensual.columns:
+                fuas_numerico = pd.to_numeric(df_filtradomensual['Total_Fuas'], errors='coerce').fillna(0)
+                total_fuas = int(fuas_numerico.sum())
+                st.metric("Total FUAS", f"{total_fuas:,}", delta_color="off")
+            else:
+                st.metric("Total FUAS", "N/A", delta_color="off")
+        
+        with col4:
+            if 'Indicador' in df_filtradomensual.columns:
+                indicador_numerico = pd.to_numeric(df_filtradomensual['Indicador'], errors='coerce')
+                indicador_promedio = indicador_numerico.mean() * 100
+                st.metric("Indicador Promedio", f"{indicador_promedio:.1f}%", delta_color="off")
+            else:
+                st.metric("Indicador Promedio", "N/A", delta_color="off")
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        # Botón para descargar datos - CON ESTILO MEJORADO
+        st.subheader("💾 Exportar Datos Filtrados")
+        
+        # Crear archivo Excel en memoria
+        excel_buffer = BytesIO()
+        with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+            df_filtradomensual.to_excel(writer, sheet_name='Datos_Mensuales', index=False)
+        excel_buffer.seek(0)
+        
+        st.download_button(
+            label="📥 Descargar listado filtrado en Excel",
+            data=excel_buffer,
+            file_name=f"datos_mensuales_{mes_seleccionado}_{Año_seleccionado}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
     # --- LIENZO 5: LISTADO DE DATOS ACUMULADOS ANUAL ---
     with st.expander("📊 **LISTADO DE DATOS ANUAL**", expanded=True):
