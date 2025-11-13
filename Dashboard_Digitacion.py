@@ -71,7 +71,7 @@ st.markdown("""
 
 # 🟦 TAB 1: Dashboard Digitación
 with tab1:
-    st.header("📈 Dashboard Digitación ARFSIS Web")
+    st.header("📈 Digitación Arfsis Web")
     
     # --- Cargar archivos desde Drive ---
     url_excel_digitacion = "https://drive.google.com/uc?id=1TvDHKdACvOyheNCdNGZ_nt_yZcaLrYrC"
@@ -161,7 +161,7 @@ with tab1:
         
         # --- GRÁFICO 1: Tendencia del punto seleccionado ---
         st.subheader(f"📈 Tendencia de Cantidad por Mes - {punto}")
-        fig1, ax1 = plt.subplots(figsize=(12, 6))
+        fig1, ax1 = plt.subplots(figsize=(12, 4))
         
         if len(df_resumen) > 0:
             ax1.plot(df_resumen["Mesletras"], df_resumen["Cantidad"], marker='o', linewidth=3, color='#007ACC')
@@ -170,14 +170,14 @@ with tab1:
             max_val = max(df_resumen["Cantidad"])
             for i, val in enumerate(df_resumen["Cantidad"]):
                 ax1.text(i, val + (max_val * 0.03), str(val),
-                        ha='center', fontsize=12, weight='bold', color='black',
+                        ha='center', fontsize=9, weight='bold', color='black',
                         bbox=dict(facecolor='white', edgecolor='none', alpha=0.7, pad=2))
             
             # --- Personalización del primer gráfico ---
-            ax1.set_xlabel("Mes", fontsize=16, weight='bold')
-            ax1.set_ylabel("Cantidad Total", fontsize=16, weight='bold')
-            plt.xticks(fontsize=12, rotation=45)
-            plt.yticks(fontsize=12)
+            ax1.set_xlabel("Mes", fontsize=8, weight='bold')
+            ax1.set_ylabel("Cantidad Total", fontsize=8, weight='bold')
+            plt.xticks(fontsize=8, rotation=45)
+            plt.yticks(fontsize=8)
             ax1.grid(True, linestyle='--', alpha=0.5)
             ax1.set_ylim(bottom=0)
             plt.subplots_adjust(top=0.85)
@@ -195,7 +195,7 @@ with tab1:
         df_total_mes = df_digitacion.groupby(["Mes", "Mesletras"], as_index=False)["Cantidad"].sum()
         df_total_mes = df_total_mes.sort_values("Mes")
         
-        fig2, ax2 = plt.subplots(figsize=(12, 6))
+        fig2, ax2 = plt.subplots(figsize=(12, 4))
         
         if len(df_total_mes) > 0:
             ax2.plot(df_total_mes["Mesletras"], df_total_mes["Cantidad"], marker='o', linewidth=3, color='#28a745')
@@ -204,15 +204,15 @@ with tab1:
             max_val = max(df_total_mes["Cantidad"])
             for i, val in enumerate(df_total_mes["Cantidad"]):
                 ax2.text(i, val + (max_val * 0.03), f'{val:,}',
-                        ha='center', fontsize=11, weight='bold', color='black',
+                        ha='center', fontsize=9, weight='bold', color='black',
                         bbox=dict(facecolor='white', edgecolor='none', alpha=0.7, pad=2))
             
             # --- Personalización del segundo gráfico ---
             ax2.set_title("Total General de Cantidad por Mes (Todos los PPDD)", fontsize=14, weight='bold')
-            ax2.set_xlabel("Mes", fontsize=16, weight='bold')
-            ax2.set_ylabel("Cantidad Total", fontsize=16, weight='bold')
-            plt.xticks(fontsize=12, rotation=45)
-            plt.yticks(fontsize=12)
+            ax2.set_xlabel("Mes", fontsize=8, weight='bold')
+            ax2.set_ylabel("Cantidad Total", fontsize=8, weight='bold')
+            plt.xticks(fontsize=8, rotation=45)
+            plt.yticks(fontsize=8)
             ax2.grid(True, linestyle='--', alpha=0.5)
             ax2.set_ylim(bottom=0, top=80000)
             plt.subplots_adjust(top=0.85)
@@ -221,574 +221,89 @@ with tab1:
         
         st.pyplot(fig2)
 
-# --- LIENZO 4: LISTADO DE DATOS MENSUALES CON AgGrid ---
-with st.expander("📊 **LISTADO DE DATOS MENSUALES**", expanded=True):
-    st.subheader("📋 Listado Completo de Datos Mensuales")
-    
-    # --- FILTROS ---
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Definir el orden cronológico de los meses
-        orden_meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+    # --- LIENZO 4: LISTADO DE DATOS MENSUALES CON AgGrid ---
+    with st.expander("📊 **LISTADO DE DATOS MENSUALES**", expanded=True):
+        st.subheader("📋 Oportunidad de Digitación Mensual")
         
-        # Obtener meses únicos del dataframe y ordenarlos cronológicamente
-        meses_disponibles = df_mensual["Mes"].dropna().unique()
-        meses_disponibles = sorted([m for m in meses_disponibles if m in orden_meses],
-                                  key=lambda x: orden_meses.index(x))
-        
-        mes_seleccionado = st.selectbox(
-            "📅 Seleccione el mes:",
-            options=meses_disponibles,
-            key="mes_mensual",
-            index=meses_disponibles.index("Enero") if "Enero" in meses_disponibles else 0
-        )
-    
-    with col2:
-        if 'Año' in df_mensual.columns:
-            años_disponibles = sorted(df_mensual['Año'].unique())
-            año_seleccionado = st.selectbox(
-                "Selecciona el Año", 
-                options=años_disponibles,
-                key="anio_mensual",
-                index=len(años_disponibles)-1 if len(años_disponibles) > 0 else 0
-            )
-        else:
-            st.error("No se encontró la columna 'Año' en los datos")
-            año_seleccionado = None
-    
-    # --- APLICAR FILTROS ---
-    if mes_seleccionado and año_seleccionado and 'Mes' in df_mensual.columns and 'Año' in df_mensual.columns:
-        df_filtrado = df_mensual[
-            (df_mensual['Mes'] == mes_seleccionado) & 
-            (df_mensual['Año'] == año_seleccionado)
-        ].copy()
-    else:
-        df_filtrado = df_mensual.copy()
-
-    # Verificar si hay datos después del filtro
-    if df_filtrado.empty:
-        st.warning("No hay datos disponibles para ese mes y año.")
-    else:
-        # Ordenar por Indicador (mayor a menor)
-        if 'Indicador' in df_filtrado.columns:
-            df_filtrado = df_filtrado.sort_values('Indicador', ascending=False)
-        
-        st.subheader("📊 Listado Detallado (Ordenado por Indicador - Mayor a Menor)")
-        
-        # DEFINIR columnas_existentes ANTES de usarla
-        columnas_a_mostrar = ['CodPpdd', 'Ppdd', 'Oportunos', 'Total_Fuas', 'Indicador']
-        columnas_existentes = [col for col in columnas_a_mostrar if col in df_filtrado.columns]
-        
-        if columnas_existentes:
-            # Preparar DataFrame para mostrar
-            df_mostrar = df_filtrado[columnas_existentes].copy()
-            df_mostrar = df_mostrar.reset_index(drop=True)
-            df_mostrar.insert(0, "N°", range(1, len(df_mostrar) + 1))
-
-            # Limpiar datos numéricos
-            columnas_numericas = ["N°", "CodPpdd", "Oportunos", "Total_Fuas", "Indicador"]
-            df_mostrar = limpiar_y_preparar_dataframe(df_mostrar, columnas_numericas)
-            
-            # Formatear indicador como porcentaje
-            df_mostrar_formateado = df_mostrar.copy()
-            if 'Indicador' in df_mostrar_formateado.columns:
-                df_mostrar_formateado['Indicador'] = df_mostrar_formateado['Indicador'].apply(
-                    lambda x: f"{x:.1%}" if isinstance(x, (int, float)) and not pd.isna(x) else "N/A"
-                )
-
-            # CONFIGURACIÓN AgGrid
-            from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
-            
-            gb = GridOptionsBuilder.from_dataframe(df_mostrar_formateado)
-            
-            gb.configure_default_column(
-                resizable=True,
-                sortable=True,
-                filterable=True,
-                wrapText=True,
-                autoHeight=True,
-                minWidth=100,
-                flex=1,
-                cellStyle={"fontWeight": "300", "fontFamily": "'Bahnschrift Light', 'Segoe UI', sans-serif", "fontSize": "20px"}
-            )
-            
-            # Configurar columnas específicas con autoajuste
-            gb.configure_column("N°", headerName="N°", width=80, type=["numericColumn"], maxWidth=100)
-            gb.configure_column("CodPpdd", headerName="Código", width=100, type=["numericColumn"], maxWidth=120)
-            gb.configure_column("Ppdd", headerName="Punto de Digitación", width=300, minWidth=200, flex=2)
-            gb.configure_column("Oportunos", headerName="Oportunos", width=120, type=["numericColumn"], maxWidth=150)
-            gb.configure_column("Total_Fuas", headerName="Total FUAS", width=120, type=["numericColumn"], maxWidth=150)
-            
-            # Configurar colores usando JsCode para la columna Indicador
-            cellstyle_jscode = JsCode("""
-            function(params) {
-                var valor = params.value;
-                
-                if (valor === 'N/A' || valor === null || valor === undefined) {
-                    return {
-                        'backgroundColor': 'lightgray',
-                        'color': 'black',
-                        'fontWeight': 'bold'
-                    };
-                }
-                
-                try {
-                    // Convertir a número
-                    var numVal;
-                    if (typeof valor === 'string' && valor.includes('%')) {
-                        numVal = parseFloat(valor.replace('%', '')) / 100;
-                    } else {
-                        numVal = parseFloat(valor);
-                    }
-                    
-                    if (numVal >= 0.75) {
-                        return {
-                            'backgroundColor': '#00b050',
-                            'color': 'white',
-                            'fontWeight': '300',
-                            'fontFamily': "'Bahnschrift Light', 'Segoe UI', sans-serif",
-                            'fontSize': '20px'                                      
-                        };
-                    } else if (numVal >= 0.60) {
-                        return {
-                            'backgroundColor': '#ffcc66',
-                            'color': 'black',
-                            'fontWeight': '300',
-                            'fontFamily': "'Bahnschrift Light', 'Segoe UI', sans-serif",
-                            'fontSize': '20px'
-                        };
-                    } else if (numVal >= 0.25) {
-                        return {
-                            'backgroundColor': '#ff7c80',
-                            'color': 'black',
-                            'fontWeight': '300',
-                            'fontFamily': "'Bahnschrift Light', 'Segoe UI', sans-serif",
-                            'fontSize': '20px'
-                        };
-                    } else {
-                        return {
-                            'backgroundColor': '#ff0000',
-                            'color': 'white',
-                            'fontWeight': '300',
-                            'fontFamily': "'Bahnschrift Light', 'Segoe UI', sans-serif",
-                            'fontSize': '20px'
-                        };
-                    }
-                } catch (error) {
-                    return {
-                        'backgroundColor': 'lightgray',
-                        'color': 'black',
-                        'fontWeight': '300',
-                        'fontFamily': "'Bahnschrift Light', 'Segoe UI', sans-serif",
-                        'fontSize': '20px'
-                    };
-                }
-            }
-            """)
-            
-            gb.configure_column("Indicador", headerName="Indicador", width=120, maxWidth=150, cellStyle=cellstyle_jscode)
-            
-            # Configurar grid options con autoajuste
-            grid_options = gb.build()
-            grid_options['suppressAutoSize'] = False
-            grid_options['enableCellTextSelection'] = True
-            grid_options['ensureDomOrder'] = True
-
-            # Calcular altura dinámica
-            num_registros = len(df_mostrar_formateado)
-            altura = min(600, max(200, num_registros * 40 + 60))  # Aumentada para fuente más grande
-
-            # CSS personalizado para fuente más grande
-            custom_css = {
-                ".ag-theme-streamlit": {
-                    "--ag-font-size": "16px",  # Aumentado de ~11px a 16px (+5px)
-                    "--ag-header-font-size": "16px",
-                    "--ag-cell-horizontal-padding": "12px",
-                },
-                ".ag-header-cell-text": {
-                    "font-size": "16px",
-                    "font-weight": "bold"
-                },
-                ".ag-cell": {
-                    "font-size": "16px",
-                    "display": "flex",
-                    "align-items": "center"
-                }
-            }
-
-            # MOSTRAR AgGrid
-            st.write(f"**Mostrando {num_registros} registros** - Use los filtros en los encabezados de columna ↗️")
-            
-            grid_response = AgGrid(
-                df_mostrar_formateado,
-                gridOptions=grid_options,
-                height=altura,
-                theme='streamlit',
-                fit_columns_on_grid_load=True,  # Autoajuste activado
-                allow_unsafe_jscode=True,
-                enable_enterprise_modules=False,
-                custom_css=custom_css,  # CSS personalizado para fuente más grande
-                key="grid_mensual_aggrid"
-            )
-
-            # Leyenda de colores con fuente más grande
-            st.markdown("""
-            <div style="font-size: 16px; margin-top: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 15px; border-radius: 10px;">
-            <strong style="font-size: 18px; color: #2c3e50;">🎨 Leyenda de Indicadores:</strong><br><br>
-            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                <span style='color: white; background-color: #00b050; padding: 8px 14px; border-radius: 15px; font-weight: bold; font-size: 14px;'>Bueno (75-100%)</span>
-                <span style='color: black; background-color: #ffcc66; padding: 8px 14px; border-radius: 15px; font-weight: bold; font-size: 14px;'>Regular (60-74%)</span>
-                <span style='color: black; background-color: #ff7c80; padding: 8px 14px; border-radius: 15px; font-weight: bold; font-size: 14px;'>En Proceso (25-59%)</span>
-                <span style='color: white; background-color: #ff0000; padding: 8px 14px; border-radius: 15px; font-weight: bold; font-size: 14px;'>Malo (0-24%)</span>
-                <span style='color: black; background-color: lightgray; padding: 8px 14px; border-radius: 15px; font-weight: bold; font-size: 14px;'>Datos Inválidos</span>
-            </div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Información con fuente más grande
-            total_registros = len(df_filtrado)
-            st.info(f"**ℹ️ Información:** Mostrando {total_registros} registros del mes {mes_seleccionado} del Año {año_seleccionado}, ordenados por Indicador (mayor a menor).")
-
-        else:
-            st.error("No se encontraron las columnas especificadas en el dataset.")
-            st.write("Columnas disponibles en el dataset:", list(df_filtrado.columns))
-
-        # Métricas de resumen
-        st.subheader(f"📈 Resumen - Mes {mes_seleccionado} / Año {año_seleccionado}")
-        
-        col1, col2, col3, col4 = st.columns(4)
+        # --- FILTROS ---
+        col1, col2 = st.columns(2)
         
         with col1:
-            total_registros = len(df_filtrado)
-            st.metric("Total de Registros", f"{total_registros:,}")
-        
-        with col2:
-            if 'Oportunos' in df_filtrado.columns:
-                oportunos_numerico = pd.to_numeric(df_filtrado['Oportunos'], errors='coerce').fillna(0)
-                total_oportunos = int(oportunos_numerico.sum())
-                st.metric("Total Oportunos", f"{total_oportunos:,}")
-            else:
-                st.metric("Total Oportunos", "N/A")
-        
-        with col3:
-            if 'Total_Fuas' in df_filtrado.columns:
-                fuas_numerico = pd.to_numeric(df_filtrado['Total_Fuas'], errors='coerce').fillna(0)
-                total_fuas = int(fuas_numerico.sum())
-                st.metric("Total FUAS", f"{total_fuas:,}")
-            else:
-                st.metric("Total FUAS", "N/A")
-        
-        with col4:
-            if 'Indicador' in df_filtrado.columns:
-                indicador_numerico = pd.to_numeric(df_filtrado['Indicador'], errors='coerce')
-                indicador_promedio = indicador_numerico.mean() * 100
-                st.metric("Indicador Promedio", f"{indicador_promedio:.1f}%")
-            else:
-                st.metric("Indicador Promedio", "N/A")
-        
-        # Botón descargar
-        st.subheader("💾 Exportar Datos Filtrados")
-        excel_buffer = BytesIO()
-        with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-            df_filtrado.to_excel(writer, sheet_name='Datos_Mensuales', index=False)
-        excel_buffer.seek(0)
-        
-        st.download_button(
-            label="📥 Descargar listado filtrado en Excel",
-            data=excel_buffer,
-            file_name=f"datos_mensuales_{mes_seleccionado}_{año_seleccionado}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True
-        )
-
-# --- LIENZO 4.5: GRÁFICO DE BARRAS MENSUALES ---
-# --- LIENZO 4: GRÁFICO DE BARRAS MENSUALES ---
-with st.expander("📊 **GRÁFICO DE BARRAS MENSUALES**", expanded=True):
-    st.subheader("📈 Oportunidad de Digitación por Punto")
-    
-    # --- FILTROS ---
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Definir el orden cronológico de los meses
-        orden_meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
-        
-        # Obtener meses únicos del dataframe y ordenarlos cronológicamente
-        meses_disponibles = df_mensual["Mes"].dropna().unique()
-        meses_disponibles = sorted([m for m in meses_disponibles if m in orden_meses],
-                                  key=lambda x: orden_meses.index(x))
-        
-        mes_seleccionado = st.selectbox(
-            "📅 Seleccione el mes:",
-            options=meses_disponibles,
-            key="mes_mensual_grafico",
-            index=meses_disponibles.index("Enero") if "Enero" in meses_disponibles else 0
-        )
-    
-    with col2:
-        if 'Año' in df_mensual.columns:
-            años_disponibles = sorted(df_mensual['Año'].unique())
-            año_seleccionado = st.selectbox(
-                "Selecciona el Año", 
-                options=años_disponibles,
-                key="anio_mensual_grafico",
-                index=len(años_disponibles)-1 if len(años_disponibles) > 0 else 0
-            )
-        else:
-            st.error("No se encontró la columna 'Año' en los datos")
-            año_seleccionado = None
-    
-    # --- APLICAR FILTROS ---
-    if mes_seleccionado and año_seleccionado and 'Mes' in df_mensual.columns and 'Año' in df_mensual.columns:
-        df_filtrado = df_mensual[
-            (df_mensual['Mes'] == mes_seleccionado) & 
-            (df_mensual['Año'] == año_seleccionado)
-        ].copy()
-    else:
-        df_filtrado = df_mensual.copy()
-
-    # Verificar si hay datos después del filtro
-    if df_filtrado.empty:
-        st.warning("No hay datos disponibles para ese mes y año.")
-    else:
-        # Ordenar por Indicador (mayor a menor)
-        if 'Indicador' in df_filtrado.columns:
-            df_filtrado = df_filtrado.sort_values('Indicador', ascending=False)
-        
-        # Crear gráfico de barras
-        #  st.subheader(f"📊 Gráfico de Indicadores - {mes_seleccionado} {año_seleccionado}")
-        
-        # USAR TODOS LOS REGISTROS EN LUGAR DE SOLO 20
-        df_grafico = df_filtrado  # Mostrar todos los puntos
-        
-        # Configurar el tamaño del gráfico dinámicamente basado en el número de puntos
-        num_puntos = len(df_grafico)
-        # altura_grafico = max(8, num_puntos * 0.6)  # Altura dinámica
-        fig, ax = plt.subplots(figsize=(12, 5))
-        
-        # Verificar que hay datos para graficar
-        if df_grafico.empty:
-            st.warning("No hay datos suficientes para generar el gráfico.")
-        else:
-            # Crear colores basados en los valores del indicador
-            colores = []
-            for indicador in df_grafico['Indicador']:
-                if pd.isna(indicador):
-                    colores.append('lightgray')
-                elif indicador >= 0.75:
-                    colores.append('#00b050')  # Verde
-                elif indicador >= 0.60:
-                    colores.append('#ffcc66')  # Amarillo
-                elif indicador >= 0.25:
-                    colores.append('#ff7c80')  # Naranja
-                else:
-                    colores.append('#ff0000')  # Rojo
+            # Definir el orden cronológico de los meses
+            orden_meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
             
-            # Crear las barras
-            barras = ax.bar(range(len(df_grafico)), 
-                           df_grafico['Indicador'] * 100,  # Convertir a porcentaje
-                           color=colores,
-                           alpha=0.8,
-                           edgecolor='black',
-                           linewidth=0.5)
+            # Obtener meses únicos del dataframe y ordenarlos cronológicamente
+            meses_disponibles = df_mensual["Mes"].dropna().unique()
+            meses_disponibles = sorted([m for m in meses_disponibles if m in orden_meses],
+                                    key=lambda x: orden_meses.index(x))
             
-            # Personalizar el gráfico
-            ax.set_xlabel('Puntos de Digitación', fontsize=12, fontweight='bold')
-            ax.set_ylabel('Oportunidad de Digitación (%)', fontsize=12, fontweight='bold')
-            #-- ax.set_title(f'Indicadores de Desempeño por Punto de Digitación\n{mes_seleccionado} {año_seleccionado}',fontsize=14, fontweight='bold', pad=20)
-            
-            # Configurar etiquetas del eje X
-            ax.set_xticks(range(len(df_grafico)))
-            
-            # Usar Ppdd si existe, sino usar CodPpdd
-            if 'Ppdd' in df_grafico.columns:
-                etiquetas = df_grafico['Ppdd'].astype(str)
-            elif 'CodPpdd' in df_grafico.columns:
-                etiquetas = df_grafico['CodPpdd'].astype(str)
-            else:
-                etiquetas = [f"Punto {i+1}" for i in range(len(df_grafico))]
-            
-            ax.set_xticklabels(etiquetas, rotation=45, ha='right', fontsize=7)
-            
-            # Configurar eje Y como porcentaje
-            ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y:.0f}%'))
-            
-            # Añadir líneas de referencia
-            #ax.axhline(y=75, color='green', linestyle='--', alpha=0.7, label='Bueno (75%)')
-            #ax.axhline(y=60, color='orange', linestyle='--', alpha=0.7, label='Regular (74%)')
-            #ax.axhline(y=59, color='orange', linestyle='--', alpha=0.7, label='En Proceso (59%)')
-            #ax.axhline(y=24, color='red', linestyle='--', alpha=0.7, label='Malo (24%)')
-            
-            # Añadir valores en las barras
-            for i, barra in enumerate(barras):
-                height = barra.get_height()
-                ax.text(barra.get_x() + barra.get_width()/2., height + 1,
-                       f'{height:.1f}%', ha='center', va='bottom', fontsize=8, fontweight='bold')
-            
-            # Añadir leyenda
-            ax.legend(loc='upper right', frameon=True, facecolor='white')
-            
-            # Ajustar layout para evitar que se corten las etiquetas
-            plt.tight_layout()
-            
-            # Mostrar el gráfico en Streamlit
-            st.pyplot(fig)
-            
-            # Información adicional
-            # st.info(f"**ℹ️ Mostrando todos los {len(df_grafico)} puntos de digitación ordenados por indicador (de mayor a menor)**")
-
-        # Leyenda de colores
-        st.markdown("""
-        <div style="font-size: 14px; margin-top: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 15px; border-radius: 10px;">
-        <strong style="font-size: 16px; color: #2c3e50;">🎨 Leyenda de Indicadores:</strong><br><br>
-        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-            <span style='color: white; background-color: #00b050; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>Bueno (75-100%)</span>
-            <span style='color: black; background-color: #ffcc66; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>Regular (60-74%)</span>
-            <span style='color: black; background-color: #ff7c80; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>En Proceso (25-59%)</span>
-            <span style='color: white; background-color: #ff0000; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>Malo (0-24%)</span>
-            <span style='color: black; background-color: lightgray; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>Datos Inválidos</span>
-        </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Métricas de resumen
-        st.subheader(f"📊 Resumen - Mes {mes_seleccionado} / Año {año_seleccionado}")
-        
-        col1, col2, col3, col4 = st.columns(4)
-        
-        with col1:
-            total_registros = len(df_filtrado)
-            st.metric("Total de Registros", f"{total_registros:,}")
-        
-        with col2:
-            if 'Oportunos' in df_filtrado.columns:
-                oportunos_numerico = pd.to_numeric(df_filtrado['Oportunos'], errors='coerce').fillna(0)
-                total_oportunos = int(oportunos_numerico.sum())
-                st.metric("Total Oportunos", f"{total_oportunos:,}")
-            else:
-                st.metric("Total Oportunos", "N/A")
-        
-        with col3:
-            if 'Total_Fuas' in df_filtrado.columns:
-                fuas_numerico = pd.to_numeric(df_filtrado['Total_Fuas'], errors='coerce').fillna(0)
-                total_fuas = int(fuas_numerico.sum())
-                st.metric("Total FUAS", f"{total_fuas:,}")
-            else:
-                st.metric("Total FUAS", "N/A")
-        
-        with col4:
-            if 'Indicador' in df_filtrado.columns:
-                indicador_numerico = pd.to_numeric(df_filtrado['Indicador'], errors='coerce')
-                indicador_promedio = indicador_numerico.mean() * 100
-                st.metric("Indicador Promedio", f"{indicador_promedio:.1f}%")
-            else:
-                st.metric("Indicador Promedio", "N/A")
-        
-        # Botón descargar
-        st.subheader("💾 Exportar Datos Filtrados")
-        excel_buffer = BytesIO()
-        with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-            df_filtrado.to_excel(writer, sheet_name='Datos_Mensuales', index=False)
-        excel_buffer.seek(0)
-        
-        st.download_button(
-            label="📥 Descargar datos filtrados en Excel",
-            data=excel_buffer,
-            file_name=f"datos_mensuales_{mes_seleccionado}_{año_seleccionado}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True,
-            key="descargar_grafico"
-        )
-
-# --- LIENZO 5: LISTADO DE DATOS ACUMULADOS ANUAL CON AgGrid ---
-with st.expander("📊 **LISTADO DE DATOS ANUAL**", expanded=True):
-    st.subheader("📋 Listado Completo de Datos Acumulado")
-    
-    # Verificar si hay datos
-    if df_anual.empty or len(df_anual) == 0:
-        st.warning("No hay datos disponibles en el dataset anual.")
-    else:
-        # Filtros
-        col1_ac, col2_ac = st.columns(2)
-        
-        with col1_ac:
-            orden_meses_ac = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                             "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
-            meses_disponibles_ac = df_anual["Mes"].dropna().unique()
-            meses_disponibles_ac = sorted([m for m in meses_disponibles_ac if m in orden_meses_ac],
-                                        key=lambda x: orden_meses_ac.index(x))
-            
-            mes_seleccionado_ac = st.selectbox(
+            mes_seleccionado = st.selectbox(
                 "📅 Seleccione el mes:",
-                options=meses_disponibles_ac,
-                key="mes_anual",
-                index=meses_disponibles_ac.index("Enero") if "Enero" in meses_disponibles_ac else 0
+                options=meses_disponibles,
+                key="mes_mensual",
+                index=meses_disponibles.index("Enero") if "Enero" in meses_disponibles else 0
             )
         
-        with col2_ac:
-            if 'Año' in df_anual.columns:
-                Años_disponibles_ac = sorted(df_anual['Año'].unique())
-                Año_seleccionado_ac = st.selectbox(
+        with col2:
+            if 'Año' in df_mensual.columns:
+                años_disponibles = sorted(df_mensual['Año'].unique())
+                año_seleccionado = st.selectbox(
                     "Selecciona el Año", 
-                    options=Años_disponibles_ac,
-                    key="anio_anual",
-                    index=len(Años_disponibles_ac)-1 if len(Años_disponibles_ac) > 0 else 0
+                    options=años_disponibles,
+                    key="anio_mensual",
+                    index=len(años_disponibles)-1 if len(años_disponibles) > 0 else 0
                 )
             else:
                 st.error("No se encontró la columna 'Año' en los datos")
-                Año_seleccionado_ac = None
+                año_seleccionado = None
         
-        # Aplicar filtros
-        if mes_seleccionado_ac and Año_seleccionado_ac and 'Mes' in df_anual.columns and 'Año' in df_anual.columns:
-            df_filtradoanual = df_anual[
-                (df_anual['Mes'] == mes_seleccionado_ac) & 
-                (df_anual['Año'] == Año_seleccionado_ac)
+        # --- APLICAR FILTROS ---
+        if mes_seleccionado and año_seleccionado and 'Mes' in df_mensual.columns and 'Año' in df_mensual.columns:
+            df_filtrado = df_mensual[
+                (df_mensual['Mes'] == mes_seleccionado) & 
+                (df_mensual['Año'] == año_seleccionado)
             ].copy()
         else:
-            df_filtradoanual = df_anual.copy()
+            df_filtrado = df_mensual.copy()
 
         # Verificar si hay datos después del filtro
-        if df_filtradoanual.empty:
+        if df_filtrado.empty:
             st.warning("No hay datos disponibles para ese mes y año.")
         else:
-            # Ordenar por Indicador
-            if 'Indicador' in df_filtradoanual.columns:
-                df_filtradoanual = df_filtradoanual.sort_values('Indicador', ascending=False)
+            # Ordenar por Indicador (mayor a menor)
+            if 'Indicador' in df_filtrado.columns:
+                df_filtrado = df_filtrado.sort_values('Indicador', ascending=False)
             
-            st.subheader("📊 Listado Detallado (Ordenado por Indicador - Mayor a Menor)")
+            # st.subheader("📊 Listado Detallado (Ordenado por Indicador - Mayor a Menor)")
             
-            # Columnas a mostrar
-            columnas_a_mostrar_ac = ['CodPpdd', 'Ppdd', 'Oportunos', 'Total_Fuas', 'Indicador']
+            # DEFINIR columnas_existentes ANTES de usarla
+            columnas_a_mostrar = ['CodPpdd', 'Ppdd', 'Oportunos', 'Total_Fuas', 'Indicador']
+            columnas_existentes = [col for col in columnas_a_mostrar if col in df_filtrado.columns]
             
-            # Verificar que las columnas existan
-            columnas_existentes_ac = [col for col in columnas_a_mostrar_ac if col in df_filtradoanual.columns]
-            
-            if columnas_existentes_ac:
+            if columnas_existentes:
                 # Preparar DataFrame para mostrar
-                df_mostrar_anual = df_filtradoanual[columnas_existentes_ac].copy()
-                df_mostrar_anual = df_mostrar_anual.reset_index(drop=True)
-                df_mostrar_anual.insert(0, "N°", range(1, len(df_mostrar_anual) + 1))
+                df_mostrar = df_filtrado[columnas_existentes].copy()
+                df_mostrar = df_mostrar.reset_index(drop=True)
+                df_mostrar.insert(0, "N°", range(1, len(df_mostrar) + 1))
 
                 # Limpiar datos numéricos
-                columnas_numericas_ac = ["N°", "CodPpdd", "Oportunos", "Total_Fuas", "Indicador"]
-                df_mostrar_anual = limpiar_y_preparar_dataframe(df_mostrar_anual, columnas_numericas_ac)
+                columnas_numericas = ["N°", "CodPpdd", "Oportunos", "Total_Fuas", "Indicador"]
+                df_mostrar = limpiar_y_preparar_dataframe(df_mostrar, columnas_numericas)
                 
                 # Formatear indicador como porcentaje
-                df_mostrar_formateado_ac = df_mostrar_anual.copy()
-                if 'Indicador' in df_mostrar_formateado_ac.columns:
-                    df_mostrar_formateado_ac['Indicador'] = df_mostrar_formateado_ac['Indicador'].apply(
+                df_mostrar_formateado = df_mostrar.copy()
+                if 'Indicador' in df_mostrar_formateado.columns:
+                    df_mostrar_formateado['Indicador'] = df_mostrar_formateado['Indicador'].apply(
                         lambda x: f"{x:.1%}" if isinstance(x, (int, float)) and not pd.isna(x) else "N/A"
                     )
 
                 # CONFIGURACIÓN AgGrid
                 from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
                 
-                gb_anual = GridOptionsBuilder.from_dataframe(df_mostrar_formateado_ac)
+                gb = GridOptionsBuilder.from_dataframe(df_mostrar_formateado)
                 
-                gb_anual.configure_default_column(
+                gb.configure_default_column(
                     resizable=True,
                     sortable=True,
                     filterable=True,
@@ -800,14 +315,14 @@ with st.expander("📊 **LISTADO DE DATOS ANUAL**", expanded=True):
                 )
                 
                 # Configurar columnas específicas con autoajuste
-                gb_anual.configure_column("N°", headerName="N°", width=80, type=["numericColumn"], maxWidth=100)
-                gb_anual.configure_column("CodPpdd", headerName="Código", width=100, type=["numericColumn"], maxWidth=120)
-                gb_anual.configure_column("Ppdd", headerName="Punto de Digitación", width=300, minWidth=200, flex=2)
-                gb_anual.configure_column("Oportunos", headerName="Oportunos", width=120, type=["numericColumn"], maxWidth=150)
-                gb_anual.configure_column("Total_Fuas", headerName="Total FUAS", width=120, type=["numericColumn"], maxWidth=150)
+                gb.configure_column("N°", headerName="N°", width=80, type=["numericColumn"], maxWidth=100)
+                gb.configure_column("CodPpdd", headerName="Código", width=100, type=["numericColumn"], maxWidth=120)
+                gb.configure_column("Ppdd", headerName="Punto de Digitación", width=300, minWidth=200, flex=2)
+                gb.configure_column("Oportunos", headerName="Oportunos", width=120, type=["numericColumn"], maxWidth=150)
+                gb.configure_column("Total_Fuas", headerName="Total FUAS", width=120, type=["numericColumn"], maxWidth=150)
                 
                 # Configurar colores usando JsCode para la columna Indicador
-                cellstyle_jscode_anual = JsCode("""
+                cellstyle_jscode = JsCode("""
                 function(params) {
                     var valor = params.value;
                     
@@ -833,8 +348,8 @@ with st.expander("📊 **LISTADO DE DATOS ANUAL**", expanded=True):
                                 'backgroundColor': '#00b050',
                                 'color': 'white',
                                 'fontWeight': '300',
-                               'fontFamily': "'Bahnschrift Light', 'Segoe UI', sans-serif",
-                               'fontSize': '20px'                                      
+                                'fontFamily': "'Bahnschrift Light', 'Segoe UI', sans-serif",
+                                'fontSize': '20px'                                      
                             };
                         } else if (numVal >= 0.60) {
                             return {
@@ -842,15 +357,15 @@ with st.expander("📊 **LISTADO DE DATOS ANUAL**", expanded=True):
                                 'color': 'black',
                                 'fontWeight': '300',
                                 'fontFamily': "'Bahnschrift Light', 'Segoe UI', sans-serif",
-                                'fontSize': '20px'                                      
+                                'fontSize': '20px'
                             };
                         } else if (numVal >= 0.25) {
                             return {
                                 'backgroundColor': '#ff7c80',
                                 'color': 'black',
                                 'fontWeight': '300',
-                               'fontFamily': "'Bahnschrift Light', 'Segoe UI', sans-serif",
-                               'fontSize': '20px'                                      
+                                'fontFamily': "'Bahnschrift Light', 'Segoe UI', sans-serif",
+                                'fontSize': '20px'
                             };
                         } else {
                             return {
@@ -858,7 +373,7 @@ with st.expander("📊 **LISTADO DE DATOS ANUAL**", expanded=True):
                                 'color': 'white',
                                 'fontWeight': '300',
                                 'fontFamily': "'Bahnschrift Light', 'Segoe UI', sans-serif",
-                                'fontSize': '20px'                                      
+                                'fontSize': '20px'
                             };
                         }
                     } catch (error) {
@@ -867,30 +382,26 @@ with st.expander("📊 **LISTADO DE DATOS ANUAL**", expanded=True):
                             'color': 'black',
                             'fontWeight': '300',
                             'fontFamily': "'Bahnschrift Light', 'Segoe UI', sans-serif",
-                            'fontSize': '20px'                                      
+                            'fontSize': '20px'
                         };
                     }
                 }
                 """)
                 
-                gb_anual.configure_column("Indicador",
-                     headerName="Indicador", 
-                     width=120, 
-                     maxWidth=150, 
-                     cellStyle=cellstyle_jscode_anual)
+                gb.configure_column("Indicador", headerName="Indicador", width=120, maxWidth=150, cellStyle=cellstyle_jscode)
                 
                 # Configurar grid options con autoajuste
-                grid_options_anual = gb_anual.build()
-                grid_options_anual['suppressAutoSize'] = False
-                grid_options_anual['enableCellTextSelection'] = True
-                grid_options_anual['ensureDomOrder'] = True
+                grid_options = gb.build()
+                grid_options['suppressAutoSize'] = False
+                grid_options['enableCellTextSelection'] = True
+                grid_options['ensureDomOrder'] = True
 
                 # Calcular altura dinámica
-                num_registros = len(df_mostrar_formateado_ac)
+                num_registros = len(df_mostrar_formateado)
                 altura = min(600, max(200, num_registros * 40 + 60))  # Aumentada para fuente más grande
 
                 # CSS personalizado para fuente más grande
-                custom_css_anual = {
+                custom_css = {
                     ".ag-theme-streamlit": {
                         "--ag-font-size": "16px",  # Aumentado de ~11px a 16px (+5px)
                         "--ag-header-font-size": "16px",
@@ -911,15 +422,15 @@ with st.expander("📊 **LISTADO DE DATOS ANUAL**", expanded=True):
                 st.write(f"**Mostrando {num_registros} registros** - Use los filtros en los encabezados de columna ↗️")
                 
                 grid_response = AgGrid(
-                    df_mostrar_formateado_ac,
-                    gridOptions=grid_options_anual,
+                    df_mostrar_formateado,
+                    gridOptions=grid_options,
                     height=altura,
                     theme='streamlit',
                     fit_columns_on_grid_load=True,  # Autoajuste activado
                     allow_unsafe_jscode=True,
                     enable_enterprise_modules=False,
-                    custom_css=custom_css_anual,  # CSS personalizado para fuente más grande
-                    key="grid_anual_aggrid"
+                    custom_css=custom_css,  # CSS personalizado para fuente más grande
+                    key="grid_mensual_aggrid"
                 )
 
                 # Leyenda de colores con fuente más grande
@@ -927,51 +438,51 @@ with st.expander("📊 **LISTADO DE DATOS ANUAL**", expanded=True):
                 <div style="font-size: 16px; margin-top: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 15px; border-radius: 10px;">
                 <strong style="font-size: 18px; color: #2c3e50;">🎨 Leyenda de Indicadores:</strong><br><br>
                 <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                    <span style='color: white; background-color: #00b050; padding: 8px 14px; border-radius: 15px; font-weight: bold; font-size: 14px;'>Bueno (75-100%)</span>
-                    <span style='color: black; background-color: #ffcc66; padding: 8px 14px; border-radius: 15px; font-weight: bold; font-size: 14px;'>Regular (60-74%)</span>
-                    <span style='color: black; background-color: #ff7c80; padding: 8px 14px; border-radius: 15px; font-weight: bold; font-size: 14px;'>En Proceso (25-59%)</span>
-                    <span style='color: white; background-color: #ff0000; padding: 8px 14px; border-radius: 15px; font-weight: bold; font-size: 14px;'>Malo (0-24%)</span>
-                    <span style='color: black; background-color: lightgray; padding: 8px 14px; border-radius: 15px; font-weight: bold; font-size: 14px;'>Datos Inválidos</span>
+                    <span style='color: white; background-color: #00b050; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>Bueno (75-100%)</span>
+                    <span style='color: black; background-color: #ffcc66; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>Regular (60-74%)</span>
+                    <span style='color: black; background-color: #ff7c80; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>En Proceso (25-59%)</span>
+                    <span style='color: white; background-color: #ff0000; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>Malo (0-24%)</span>
+                    <span style='color: black; background-color: lightgray; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>Datos Inválidos</span>
                 </div>
                 </div>
                 """, unsafe_allow_html=True)
                 
                 # Información con fuente más grande
-                total_registros_anual = len(df_filtradoanual)
-                st.info(f"**ℹ️ Información:** Mostrando {total_registros_anual} registros del mes {mes_seleccionado_ac} del Año {Año_seleccionado_ac}, ordenados por Indicador (mayor a menor).")
+                total_registros = len(df_filtrado)
+                st.info(f"**ℹ️ Información:** Mostrando {total_registros} registros del mes {mes_seleccionado} del Año {año_seleccionado}, ordenados por Indicador (mayor a menor).")
 
             else:
                 st.error("No se encontraron las columnas especificadas en el dataset.")
-                st.write("Columnas disponibles en el dataset:", list(df_filtradoanual.columns))
+                st.write("Columnas disponibles en el dataset:", list(df_filtrado.columns))
 
             # Métricas de resumen
-            st.subheader(f"📈 Resumen - Mes {mes_seleccionado_ac} / Año {Año_seleccionado_ac}")
+            st.subheader(f"📈 Resumen - Mes {mes_seleccionado} / Año {año_seleccionado}")
             
             col1, col2, col3, col4 = st.columns(4)
             
             with col1:
-                total_registros = len(df_filtradoanual)
+                total_registros = len(df_filtrado)
                 st.metric("Total de Registros", f"{total_registros:,}")
             
             with col2:
-                if 'Oportunos' in df_filtradoanual.columns:
-                    oportunos_numerico = pd.to_numeric(df_filtradoanual['Oportunos'], errors='coerce').fillna(0)
+                if 'Oportunos' in df_filtrado.columns:
+                    oportunos_numerico = pd.to_numeric(df_filtrado['Oportunos'], errors='coerce').fillna(0)
                     total_oportunos = int(oportunos_numerico.sum())
                     st.metric("Total Oportunos", f"{total_oportunos:,}")
                 else:
                     st.metric("Total Oportunos", "N/A")
             
             with col3:
-                if 'Total_Fuas' in df_filtradoanual.columns:
-                    fuas_numerico = pd.to_numeric(df_filtradoanual['Total_Fuas'], errors='coerce').fillna(0)
+                if 'Total_Fuas' in df_filtrado.columns:
+                    fuas_numerico = pd.to_numeric(df_filtrado['Total_Fuas'], errors='coerce').fillna(0)
                     total_fuas = int(fuas_numerico.sum())
                     st.metric("Total FUAS", f"{total_fuas:,}")
                 else:
                     st.metric("Total FUAS", "N/A")
             
             with col4:
-                if 'Indicador' in df_filtradoanual.columns:
-                    indicador_numerico = pd.to_numeric(df_filtradoanual['Indicador'], errors='coerce')
+                if 'Indicador' in df_filtrado.columns:
+                    indicador_numerico = pd.to_numeric(df_filtrado['Indicador'], errors='coerce')
                     indicador_promedio = indicador_numerico.mean() * 100
                     st.metric("Indicador Promedio", f"{indicador_promedio:.1f}%")
                 else:
@@ -979,74 +490,787 @@ with st.expander("📊 **LISTADO DE DATOS ANUAL**", expanded=True):
             
             # Botón descargar
             st.subheader("💾 Exportar Datos Filtrados")
-            excel_buffer_anual = BytesIO()
-            with pd.ExcelWriter(excel_buffer_anual, engine='openpyxl') as writer:
-                df_filtradoanual.to_excel(writer, sheet_name='Datos_Anuales', index=False)
-            excel_buffer_anual.seek(0)
+            excel_buffer = BytesIO()
+            with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                df_filtrado.to_excel(writer, sheet_name='Datos_Mensuales', index=False)
+            excel_buffer.seek(0)
             
             st.download_button(
                 label="📥 Descargar listado filtrado en Excel",
-                data=excel_buffer_anual,
-                file_name=f"datos_anuales_{mes_seleccionado_ac}_{Año_seleccionado_ac}.xlsx",
+                data=excel_buffer,
+                file_name=f"datos_mensuales_{mes_seleccionado}_{año_seleccionado}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 use_container_width=True
             )
 
-    # --- LIENZO 6: EXPORTACIÓN DE DATOS ---
-    with st.expander("💾 **EXPORTACIÓN DE DATOS**", expanded=False):
-        st.subheader("Descargar Reportes")
+    # --- LIENZO 4.5: GRÁFICO DE BARRAS MENSUALES ---
+    # --- LIENZO 4.5: GRÁFICO DE BARRAS MENSUALES ---
+    with st.expander("📊 **GRÁFICO DE BARRAS MENSUALES**", expanded=True):
+        st.subheader("📈 Oportunidad de Digitación por Punto - Mensual")
         
-        # --- Botón para PDF con todos los gráficos ---
-        buffer = BytesIO()
-        with PdfPages(buffer) as pdf:
-            # Verificar que las figuras existan antes de guardarlas
-            if fig1 is not None:
-                fig1.savefig(pdf, format='pdf', bbox_inches='tight')
-            if fig2 is not None:
-                fig2.savefig(pdf, format='pdf', bbox_inches='tight')
-            if fig3 is not None:
-                fig3.savefig(pdf, format='pdf', bbox_inches='tight')
-                
-        buffer.seek(0)
-        
-        st.download_button(
-            label="📄 Descargar todos los gráficos en PDF",
-            data=buffer,
-            file_name="graficos_digitacion_completo.pdf",
-            mime="application/pdf"
-        )
-        
-        # Botones adicionales para descargar datos en Excel - CAMBIADOS A XLSX
+        # --- FILTROS ---
         col1, col2 = st.columns(2)
+        
         with col1:
-            # Crear archivo Excel para datos de digitación
-            excel_digitacion = BytesIO()
-            with pd.ExcelWriter(excel_digitacion, engine='openpyxl') as writer:
-                df_digitacion.to_excel(writer, sheet_name='Datos_Digitacion', index=False)
-            excel_digitacion.seek(0)
+            # Definir el orden cronológico de los meses
+            orden_meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
             
-            st.download_button(
-                label="📥 Descargar datos de digitación",
-                data=excel_digitacion,
-                file_name="datos_digitacion.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            # Obtener meses únicos del dataframe y ordenarlos cronológicamente
+            meses_disponibles = df_mensual["Mes"].dropna().unique()
+            meses_disponibles = sorted([m for m in meses_disponibles if m in orden_meses],
+                                    key=lambda x: orden_meses.index(x))
+            
+            mes_seleccionado = st.selectbox(
+                "📅 Seleccione el mes:",
+                options=meses_disponibles,
+                key="mes_mensual_grafico",
+                index=meses_disponibles.index("Enero") if "Enero" in meses_disponibles else 0
             )
+        
         with col2:
-            if not df_mensual.empty:
-                # Crear archivo Excel para datos mensuales
-                excel_mensual = BytesIO()
-                with pd.ExcelWriter(excel_mensual, engine='openpyxl') as writer:
-                    df_mensual.to_excel(writer, sheet_name='Datos_Mensuales', index=False)
-                excel_mensual.seek(0)
-                
-                st.download_button(
-                    label="📥 Descargar datos mensuales completos",
-                    data=excel_mensual,
-                    file_name="datos_mensuales_completos.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            if 'Año' in df_mensual.columns:
+                años_disponibles = sorted(df_mensual['Año'].unique())
+                año_seleccionado = st.selectbox(
+                    "Selecciona el Año", 
+                    options=años_disponibles,
+                    key="anio_mensual_grafico",
+                    index=len(años_disponibles)-1 if len(años_disponibles) > 0 else 0
                 )
             else:
-                st.info("No hay datos mensuales para descargar")
+                st.error("No se encontró la columna 'Año' en los datos")
+                año_seleccionado = None
+        
+        # --- APLICAR FILTROS ---
+        if mes_seleccionado and año_seleccionado and 'Mes' in df_mensual.columns and 'Año' in df_mensual.columns:
+            df_filtrado = df_mensual[
+                (df_mensual['Mes'] == mes_seleccionado) & 
+                (df_mensual['Año'] == año_seleccionado)
+            ].copy()
+        else:
+            df_filtrado = df_mensual.copy()
+
+        # Verificar si hay datos después del filtro
+        if df_filtrado.empty:
+            st.warning("No hay datos disponibles para ese mes y año.")
+        else:
+            # Ordenar por Indicador (mayor a menor)
+            if 'Indicador' in df_filtrado.columns:
+                df_filtrado = df_filtrado.sort_values('Indicador', ascending=False)
+            
+            # Crear gráfico de barras
+            #  st.subheader(f"📊 Gráfico de Indicadores - {mes_seleccionado} {año_seleccionado}")
+            
+            # USAR TODOS LOS REGISTROS EN LUGAR DE SOLO 20
+            df_grafico = df_filtrado  # Mostrar todos los puntos
+            
+            # Configurar el tamaño del gráfico dinámicamente basado en el número de puntos
+            num_puntos = len(df_grafico)
+            # altura_grafico = max(8, num_puntos * 0.6)  # Altura dinámica
+            fig, ax = plt.subplots(figsize=(12, 5))
+            
+            # Verificar que hay datos para graficar
+            if df_grafico.empty:
+                st.warning("No hay datos suficientes para generar el gráfico.")
+            else:
+                # Crear colores basados en los valores del indicador
+                colores = []
+                for indicador in df_grafico['Indicador']:
+                    if pd.isna(indicador):
+                        colores.append('lightgray')
+                    elif indicador >= 0.75:
+                        colores.append('#00b050')  # Verde
+                    elif indicador >= 0.60:
+                        colores.append('#ffcc66')  # Amarillo
+                    elif indicador >= 0.25:
+                        colores.append('#ff7c80')  # Naranja
+                    else:
+                        colores.append('#ff0000')  # Rojo
+                
+                # Crear las barras
+                barras = ax.bar(range(len(df_grafico)), 
+                            df_grafico['Indicador'] * 100,  # Convertir a porcentaje
+                            color=colores,
+                            alpha=0.8,
+                            edgecolor='black',
+                            linewidth=0.5)
+                
+                # Personalizar el gráfico
+                ax.set_xlabel('Puntos de Digitación', fontsize=12, fontweight='bold')
+                ax.set_ylabel('Oportunidad de Digitación (%)', fontsize=12, fontweight='bold')
+                #-- ax.set_title(f'Indicadores de Desempeño por Punto de Digitación\n{mes_seleccionado} {año_seleccionado}',fontsize=14, fontweight='bold', pad=20)
+                
+                # Configurar etiquetas del eje X
+                ax.set_xticks(range(len(df_grafico)))
+                
+                # Usar Ppdd si existe, sino usar CodPpdd
+                if 'Ppdd' in df_grafico.columns:
+                    etiquetas = df_grafico['Ppdd'].astype(str)
+                elif 'CodPpdd' in df_grafico.columns:
+                    etiquetas = df_grafico['CodPpdd'].astype(str)
+                else:
+                    etiquetas = [f"Punto {i+1}" for i in range(len(df_grafico))]
+                
+                ax.set_xticklabels(etiquetas, rotation=45, ha='right', fontsize=7)
+                
+                # Configurar eje Y como porcentaje
+                ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y:.0f}%'))
+                
+                # Añadir líneas de referencia
+                #ax.axhline(y=75, color='green', linestyle='--', alpha=0.7, label='Bueno (75%)')
+                #ax.axhline(y=60, color='orange', linestyle='--', alpha=0.7, label='Regular (74%)')
+                #ax.axhline(y=59, color='orange', linestyle='--', alpha=0.7, label='En Proceso (59%)')
+                #ax.axhline(y=24, color='red', linestyle='--', alpha=0.7, label='Malo (24%)')
+
+               # Leyenda personalizada para los colores
+                from matplotlib.patches import Patch
+                leyenda_elementos = [
+                  Patch(facecolor='#00b050', label='≥ 75% (Bueno)'),
+                  Patch(facecolor='#ffcc66', label='60-74.9% (Regular)'),
+                  Patch(facecolor='#ff7c80', label='25-59.9% (En Proceso)'),
+                  Patch(facecolor='#ff0000', label='< 0-24.9% (Malo)'),
+                  #Patch(facecolor='none', edgecolor='red', linestyle='--', label='Meta 40%')
+               ]
+                ax.legend(handles=leyenda_elementos, loc='upper right', fontsize=7)
+                
+                # Añadir valores en las barras
+                for i, barra in enumerate(barras):
+                    height = barra.get_height()
+                    ax.text(barra.get_x() + barra.get_width()/2., height + 1,
+                        f'{height:.1f}%', ha='center', va='bottom', fontsize=8, fontweight='bold')
+                
+                # Añadir leyenda
+                # ax.legend(loc='upper right', frameon=True, facecolor='white')
+                
+                # Ajustar layout para evitar que se corten las etiquetas
+                plt.tight_layout()
+                
+                # Mostrar el gráfico en Streamlit
+                st.pyplot(fig)
+                
+                # Información adicional
+                # st.info(f"**ℹ️ Mostrando todos los {len(df_grafico)} puntos de digitación ordenados por indicador (de mayor a menor)**")
+
+            # Leyenda de colores
+            st.markdown("""
+            <div style="font-size: 14px; margin-top: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 15px; border-radius: 10px;">
+            <strong style="font-size: 16px; color: #2c3e50;">🎨 Leyenda de Indicadores:</strong><br><br>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                <span style='color: white; background-color: #00b050; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>Bueno (75-100%)</span>
+                <span style='color: black; background-color: #ffcc66; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>Regular (60-74%)</span>
+                <span style='color: black; background-color: #ff7c80; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>En Proceso (25-59%)</span>
+                <span style='color: white; background-color: #ff0000; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>Malo (0-24%)</span>
+                <span style='color: black; background-color: lightgray; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>Datos Inválidos</span>
+            </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Métricas de resumen
+            st.subheader(f"📊 Resumen - Mes {mes_seleccionado} / Año {año_seleccionado}")
+            
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                total_registros = len(df_filtrado)
+                st.metric("Total de Registros", f"{total_registros:,}")
+            
+            with col2:
+                if 'Oportunos' in df_filtrado.columns:
+                    oportunos_numerico = pd.to_numeric(df_filtrado['Oportunos'], errors='coerce').fillna(0)
+                    total_oportunos = int(oportunos_numerico.sum())
+                    st.metric("Total Oportunos", f"{total_oportunos:,}")
+                else:
+                    st.metric("Total Oportunos", "N/A")
+            
+            with col3:
+                if 'Total_Fuas' in df_filtrado.columns:
+                    fuas_numerico = pd.to_numeric(df_filtrado['Total_Fuas'], errors='coerce').fillna(0)
+                    total_fuas = int(fuas_numerico.sum())
+                    st.metric("Total FUAS", f"{total_fuas:,}")
+                else:
+                    st.metric("Total FUAS", "N/A")
+            
+            with col4:
+                if 'Indicador' in df_filtrado.columns:
+                    indicador_numerico = pd.to_numeric(df_filtrado['Indicador'], errors='coerce')
+                    indicador_promedio = indicador_numerico.mean() * 100
+                    st.metric("Indicador Promedio", f"{indicador_promedio:.1f}%")
+                else:
+                    st.metric("Indicador Promedio", "N/A")
+            
+            # Botón descargar
+            st.subheader("💾 Exportar Datos Filtrados")
+            excel_buffer = BytesIO()
+            with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                df_filtrado.to_excel(writer, sheet_name='Datos_Mensuales', index=False)
+            excel_buffer.seek(0)
+            
+            st.download_button(
+                label="📥 Descargar datos filtrados en Excel",
+                data=excel_buffer,
+                file_name=f"datos_mensuales_{mes_seleccionado}_{año_seleccionado}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+                key="descargar_grafico"
+            )
+
+    # --- LIENZO 5: LISTADO DE DATOS ACUMULADOS ANUAL CON AgGrid ---
+    with st.expander("📊 **LISTADO DE DATOS ACUMULADO**", expanded=True):
+        st.subheader("📋 Oportunida de Digitacion Acumulado - Enero hasta el mes selecionado ")
+        
+        # Verificar si hay datos
+        if df_anual.empty or len(df_anual) == 0:
+            st.warning("No hay datos disponibles en el dataset anual.")
+        else:
+            # Filtros
+            col1_ac, col2_ac = st.columns(2)
+            
+            with col1_ac:
+                orden_meses_ac = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+                meses_disponibles_ac = df_anual["Mes"].dropna().unique()
+                meses_disponibles_ac = sorted([m for m in meses_disponibles_ac if m in orden_meses_ac],
+                                            key=lambda x: orden_meses_ac.index(x))
+                
+                mes_seleccionado_ac = st.selectbox(
+                    "📅 Seleccione el mes:",
+                    options=meses_disponibles_ac,
+                    key="mes_anual",
+                    index=meses_disponibles_ac.index("Enero") if "Enero" in meses_disponibles_ac else 0
+                )
+            
+            with col2_ac:
+                if 'Año' in df_anual.columns:
+                    Años_disponibles_ac = sorted(df_anual['Año'].unique())
+                    Año_seleccionado_ac = st.selectbox(
+                        "Selecciona el Año", 
+                        options=Años_disponibles_ac,
+                        key="anio_anual",
+                        index=len(Años_disponibles_ac)-1 if len(Años_disponibles_ac) > 0 else 0
+                    )
+                else:
+                    st.error("No se encontró la columna 'Año' en los datos")
+                    Año_seleccionado_ac = None
+            
+            # Aplicar filtros
+            if mes_seleccionado_ac and Año_seleccionado_ac and 'Mes' in df_anual.columns and 'Año' in df_anual.columns:
+                df_filtradoanual = df_anual[
+                    (df_anual['Mes'] == mes_seleccionado_ac) & 
+                    (df_anual['Año'] == Año_seleccionado_ac)
+                ].copy()
+            else:
+                df_filtradoanual = df_anual.copy()
+
+            # Verificar si hay datos después del filtro
+            if df_filtradoanual.empty:
+                st.warning("No hay datos disponibles para ese mes y año.")
+            else:
+                # Ordenar por Indicador
+                if 'Indicador' in df_filtradoanual.columns:
+                    df_filtradoanual = df_filtradoanual.sort_values('Indicador', ascending=False)
+                
+            # st.subheader("📊 Listado Detallado (Ordenado por Indicador - Mayor a Menor)")
+                
+                # Columnas a mostrar
+                columnas_a_mostrar_ac = ['CodPpdd', 'Ppdd', 'Oportunos', 'Total_Fuas', 'Indicador']
+                
+                # Verificar que las columnas existan
+                columnas_existentes_ac = [col for col in columnas_a_mostrar_ac if col in df_filtradoanual.columns]
+                
+                if columnas_existentes_ac:
+                    # Preparar DataFrame para mostrar
+                    df_mostrar_anual = df_filtradoanual[columnas_existentes_ac].copy()
+                    df_mostrar_anual = df_mostrar_anual.reset_index(drop=True)
+                    df_mostrar_anual.insert(0, "N°", range(1, len(df_mostrar_anual) + 1))
+
+                    # Limpiar datos numéricos
+                    columnas_numericas_ac = ["N°", "CodPpdd", "Oportunos", "Total_Fuas", "Indicador"]
+                    df_mostrar_anual = limpiar_y_preparar_dataframe(df_mostrar_anual, columnas_numericas_ac)
+                    
+                    # Formatear indicador como porcentaje
+                    df_mostrar_formateado_ac = df_mostrar_anual.copy()
+                    if 'Indicador' in df_mostrar_formateado_ac.columns:
+                        df_mostrar_formateado_ac['Indicador'] = df_mostrar_formateado_ac['Indicador'].apply(
+                            lambda x: f"{x:.1%}" if isinstance(x, (int, float)) and not pd.isna(x) else "N/A"
+                        )
+
+                    # CONFIGURACIÓN AgGrid
+                    from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
+                    
+                    gb_anual = GridOptionsBuilder.from_dataframe(df_mostrar_formateado_ac)
+                    
+                    gb_anual.configure_default_column(
+                        resizable=True,
+                        sortable=True,
+                        filterable=True,
+                        wrapText=True,
+                        autoHeight=True,
+                        minWidth=100,
+                        flex=1,
+                        cellStyle={"fontWeight": "300", "fontFamily": "'Bahnschrift Light', 'Segoe UI', sans-serif", "fontSize": "20px"}
+                    )
+                    
+                    # Configurar columnas específicas con autoajuste
+                    gb_anual.configure_column("N°", headerName="N°", width=80, type=["numericColumn"], maxWidth=100)
+                    gb_anual.configure_column("CodPpdd", headerName="Código", width=100, type=["numericColumn"], maxWidth=120)
+                    gb_anual.configure_column("Ppdd", headerName="Punto de Digitación", width=300, minWidth=200, flex=2)
+                    gb_anual.configure_column("Oportunos", headerName="Oportunos", width=120, type=["numericColumn"], maxWidth=150)
+                    gb_anual.configure_column("Total_Fuas", headerName="Total FUAS", width=120, type=["numericColumn"], maxWidth=150)
+                    
+                    # Configurar colores usando JsCode para la columna Indicador
+                    cellstyle_jscode_anual = JsCode("""
+                    function(params) {
+                        var valor = params.value;
+                        
+                        if (valor === 'N/A' || valor === null || valor === undefined) {
+                            return {
+                                'backgroundColor': 'lightgray',
+                                'color': 'black',
+                                'fontWeight': 'bold'
+                            };
+                        }
+                        
+                        try {
+                            // Convertir a número
+                            var numVal;
+                            if (typeof valor === 'string' && valor.includes('%')) {
+                                numVal = parseFloat(valor.replace('%', '')) / 100;
+                            } else {
+                                numVal = parseFloat(valor);
+                            }
+                            
+                            if (numVal >= 0.75) {
+                                return {
+                                    'backgroundColor': '#00b050',
+                                    'color': 'white',
+                                    'fontWeight': '300',
+                                'fontFamily': "'Bahnschrift Light', 'Segoe UI', sans-serif",
+                                'fontSize': '20px'                                      
+                                };
+                            } else if (numVal >= 0.60) {
+                                return {
+                                    'backgroundColor': '#ffcc66',
+                                    'color': 'black',
+                                    'fontWeight': '300',
+                                    'fontFamily': "'Bahnschrift Light', 'Segoe UI', sans-serif",
+                                    'fontSize': '20px'                                      
+                                };
+                            } else if (numVal >= 0.25) {
+                                return {
+                                    'backgroundColor': '#ff7c80',
+                                    'color': 'black',
+                                    'fontWeight': '300',
+                                'fontFamily': "'Bahnschrift Light', 'Segoe UI', sans-serif",
+                                'fontSize': '20px'                                      
+                                };
+                            } else {
+                                return {
+                                    'backgroundColor': '#ff0000',
+                                    'color': 'white',
+                                    'fontWeight': '300',
+                                    'fontFamily': "'Bahnschrift Light', 'Segoe UI', sans-serif",
+                                    'fontSize': '20px'                                      
+                                };
+                            }
+                        } catch (error) {
+                            return {
+                                'backgroundColor': 'lightgray',
+                                'color': 'black',
+                                'fontWeight': '300',
+                                'fontFamily': "'Bahnschrift Light', 'Segoe UI', sans-serif",
+                                'fontSize': '20px'                                      
+                            };
+                        }
+                    }
+                    """)
+                    
+                    gb_anual.configure_column("Indicador",
+                        headerName="Indicador", 
+                        width=120, 
+                        maxWidth=150, 
+                        cellStyle=cellstyle_jscode_anual)
+                    
+                    # Configurar grid options con autoajuste
+                    grid_options_anual = gb_anual.build()
+                    grid_options_anual['suppressAutoSize'] = False
+                    grid_options_anual['enableCellTextSelection'] = True
+                    grid_options_anual['ensureDomOrder'] = True
+
+                    # Calcular altura dinámica
+                    num_registros = len(df_mostrar_formateado_ac)
+                    altura = min(600, max(200, num_registros * 40 + 60))  # Aumentada para fuente más grande
+
+                    # CSS personalizado para fuente más grande
+                    custom_css_anual = {
+                        ".ag-theme-streamlit": {
+                            "--ag-font-size": "16px",  # Aumentado de ~11px a 16px (+5px)
+                            "--ag-header-font-size": "16px",
+                            "--ag-cell-horizontal-padding": "12px",
+                        },
+                        ".ag-header-cell-text": {
+                            "font-size": "16px",
+                            "font-weight": "bold"
+                        },
+                        ".ag-cell": {
+                            "font-size": "16px",
+                            "display": "flex",
+                            "align-items": "center"
+                        }
+                    }
+
+                    # MOSTRAR AgGrid
+                    st.write(f"**Mostrando {num_registros} registros** - Use los filtros en los encabezados de columna ↗️")
+                    
+                    grid_response = AgGrid(
+                        df_mostrar_formateado_ac,
+                        gridOptions=grid_options_anual,
+                        height=altura,
+                        theme='streamlit',
+                        fit_columns_on_grid_load=True,  # Autoajuste activado
+                        allow_unsafe_jscode=True,
+                        enable_enterprise_modules=False,
+                        custom_css=custom_css_anual,  # CSS personalizado para fuente más grande
+                        key="grid_anual_aggrid"
+                    )
+
+                    # Leyenda de colores con fuente más grande
+                    st.markdown("""
+                    <div style="font-size: 16px; margin-top: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 15px; border-radius: 10px;">
+                    <strong style="font-size: 18px; color: #2c3e50;">🎨 Leyenda de Indicadores:</strong><br><br>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                        <span style='color: white; background-color: #00b050; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>Bueno (75-100%)</span>
+                        <span style='color: black; background-color: #ffcc66; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>Regular (60-74%)</span>
+                        <span style='color: black; background-color: #ff7c80; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>En Proceso (25-59%)</span>
+                        <span style='color: white; background-color: #ff0000; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>Malo (0-24%)</span>
+                        <span style='color: black; background-color: lightgray; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>Datos Inválidos</span>
+                    </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Información con fuente más grande
+                    total_registros_anual = len(df_filtradoanual)
+                    st.info(f"**ℹ️ Información:** Mostrando {total_registros_anual} registros del mes {mes_seleccionado_ac} del Año {Año_seleccionado_ac}, ordenados por Indicador (mayor a menor).")
+
+                else:
+                    st.error("No se encontraron las columnas especificadas en el dataset.")
+                    st.write("Columnas disponibles en el dataset:", list(df_filtradoanual.columns))
+
+                # Métricas de resumen
+                st.subheader(f"📈 Resumen - Mes {mes_seleccionado_ac} / Año {Año_seleccionado_ac}")
+                
+                col1, col2, col3, col4 = st.columns(4)
+                
+                with col1:
+                    total_registros = len(df_filtradoanual)
+                    st.metric("Total de Registros", f"{total_registros:,}")
+                
+                with col2:
+                    if 'Oportunos' in df_filtradoanual.columns:
+                        oportunos_numerico = pd.to_numeric(df_filtradoanual['Oportunos'], errors='coerce').fillna(0)
+                        total_oportunos = int(oportunos_numerico.sum())
+                        st.metric("Total Oportunos", f"{total_oportunos:,}")
+                    else:
+                        st.metric("Total Oportunos", "N/A")
+                
+                with col3:
+                    if 'Total_Fuas' in df_filtradoanual.columns:
+                        fuas_numerico = pd.to_numeric(df_filtradoanual['Total_Fuas'], errors='coerce').fillna(0)
+                        total_fuas = int(fuas_numerico.sum())
+                        st.metric("Total FUAS", f"{total_fuas:,}")
+                    else:
+                        st.metric("Total FUAS", "N/A")
+                
+                with col4:
+                    if 'Indicador' in df_filtradoanual.columns:
+                        indicador_numerico = pd.to_numeric(df_filtradoanual['Indicador'], errors='coerce')
+                        indicador_promedio = indicador_numerico.mean() * 100
+                        st.metric("Indicador Promedio", f"{indicador_promedio:.1f}%")
+                    else:
+                        st.metric("Indicador Promedio", "N/A")
+                
+                # Botón descargar
+                st.subheader("💾 Exportar Datos Filtrados")
+                excel_buffer_anual = BytesIO()
+                with pd.ExcelWriter(excel_buffer_anual, engine='openpyxl') as writer:
+                    df_filtradoanual.to_excel(writer, sheet_name='Datos_Anuales', index=False)
+                excel_buffer_anual.seek(0)
+                
+                st.download_button(
+                    label="📥 Descargar listado filtrado en Excel",
+                    data=excel_buffer_anual,
+                    file_name=f"datos_anuales_{mes_seleccionado_ac}_{Año_seleccionado_ac}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True
+                )
+
+        # --- LIENZO 5.5: GRÁFICO DE BARRAS ACUMULADO ---
+        with st.expander("📊 **GRÁFICO DE BARRAS ACUMULADO**", expanded=True):
+            st.subheader("📋 Oportunidad de Digitación Acumulada - Enero hasta Mes Seleccionado")
+            
+            # Verificar si hay datos
+            if df_anual.empty or len(df_anual) == 0:
+                st.warning("No hay datos disponibles en el dataset anual.")
+            else:
+                # Filtros
+                col1_ac, col2_ac = st.columns(2)
+                
+                with col1_ac:
+                    orden_meses_ac = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                                    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+                    meses_disponibles_ac = df_anual["Mes"].dropna().unique()
+                    meses_disponibles_ac = sorted([m for m in meses_disponibles_ac if m in orden_meses_ac],
+                                                key=lambda x: orden_meses_ac.index(x))
+                    
+                    mes_seleccionado_ac = st.selectbox(
+                        "📅 Seleccione el mes:",
+                        options=meses_disponibles_ac,
+                        key="mes_anual_grafico",
+                        index=meses_disponibles_ac.index("Enero") if "Enero" in meses_disponibles_ac else 0
+                    )
+                
+                with col2_ac:
+                    if 'Año' in df_anual.columns:
+                        Años_disponibles_ac = sorted(df_anual['Año'].unique())
+                        Año_seleccionado_ac = st.selectbox(
+                            "Selecciona el Año", 
+                            options=Años_disponibles_ac,
+                            key="anio_anual_grafico",
+                            index=len(Años_disponibles_ac)-1 if len(Años_disponibles_ac) > 0 else 0
+                        )
+                    else:
+                        st.error("No se encontró la columna 'Año' en los datos")
+                        Año_seleccionado_ac = None
+                
+                # Aplicar filtros
+                if mes_seleccionado_ac and Año_seleccionado_ac and 'Mes' in df_anual.columns and 'Año' in df_anual.columns:
+                    df_filtradoanual = df_anual[
+                        (df_anual['Mes'] == mes_seleccionado_ac) & 
+                        (df_anual['Año'] == Año_seleccionado_ac)
+                    ].copy()
+                else:
+                    df_filtradoanual = df_anual.copy()
+
+                # Verificar si hay datos después del filtro
+                if df_filtradoanual.empty:
+                    st.warning("No hay datos disponibles para ese mes y año.")
+                else:
+                    # Ordenar por Indicador (mayor a menor)
+                    if 'Indicador' in df_filtradoanual.columns:
+                        df_filtradoanual = df_filtradoanual.sort_values('Indicador', ascending=False)
+                    
+                    # Crear gráfico de barras
+                    df_grafico = df_filtradoanual
+                    
+                    # Configurar el tamaño del gráfico
+                    fig, ax = plt.subplots(figsize=(14, 7))
+                    
+                    # Verificar que hay datos para graficar
+                    if df_grafico.empty:
+                        st.warning("No hay datos suficientes para generar el gráfico.")
+                    else:
+                        # Crear colores basados en los valores del indicador (igual que en el AgGrid)
+                        colores = []
+                        for indicador in df_grafico['Indicador']:
+                            if pd.isna(indicador):
+                                colores.append('lightgray')
+                            elif indicador >= 0.75:
+                                colores.append('#00b050')  # Verde
+                            elif indicador >= 0.60:
+                                colores.append('#ffcc66')  # Amarillo
+                            elif indicador >= 0.25:
+                                colores.append('#ff7c80')  # Naranja
+                            else:
+                                colores.append('#ff0000')  # Rojo
+                        
+                        # Crear las barras
+                        barras = ax.bar(range(len(df_grafico)), 
+                                    df_grafico['Indicador'] * 100,  # Convertir a porcentaje
+                                    color=colores,
+                                    alpha=0.8,
+                                    edgecolor='black',
+                                    linewidth=0.8)
+                        
+                        # Personalizar el gráfico
+                        ax.set_xlabel('Puntos de Digitación', fontsize=14, fontweight='bold', labelpad=15)
+                        ax.set_ylabel('Oportunidad de Digitación (%)', fontsize=14, fontweight='bold', labelpad=15)
+                        # ax.set_title(f'Oportunidad de Digitación Acumulada - {mes_seleccionado_ac} {Año_seleccionado_ac}\n(Enero hasta {mes_seleccionado_ac})', 
+                                #fontsize=16, fontweight='bold', pad=20)
+                        
+                        # Configurar etiquetas del eje X
+                        ax.set_xticks(range(len(df_grafico)))
+                        
+                        # Usar Ppdd si existe, sino usar CodPpdd (igual que en el AgGrid)
+                        if 'Ppdd' in df_grafico.columns:
+                            etiquetas = df_grafico['Ppdd'].astype(str)
+                        elif 'CodPpdd' in df_grafico.columns:
+                            etiquetas = df_grafico['CodPpdd'].astype(str)
+                        else:
+                            etiquetas = [f"Punto {i+1}" for i in range(len(df_grafico))]
+                        
+                        ax.set_xticklabels(etiquetas, rotation=45, ha='right', fontsize=10)
+                        
+                        # Configurar eje Y como porcentaje
+                        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y:.0f}%'))
+                        plt.yticks(fontsize=11)
+                        
+                        # Añadir línea de referencia para la meta (40%)
+                        ax.axhline(y=40, color='red', linestyle='--', alpha=0.7, linewidth=2, label='Meta 40%')
+                        
+                        # Leyenda personalizada para los colores
+                        from matplotlib.patches import Patch
+                        leyenda_elementos = [
+                            Patch(facecolor='#00b050', label='≥ 75% (Bueno)'),
+                            Patch(facecolor='#ffcc66', label='60-74.9% (Regular)'),
+                            Patch(facecolor='#ff7c80', label='25-59.9% (En Proceso)'),
+                            Patch(facecolor='#ff0000', label='< 0-24.9% (Malo)'),
+                            #Patch(facecolor='lightgray', label='Datos Inválidos'),
+                            #Patch(facecolor='none', edgecolor='red', linestyle='--', linewidth=2, label='Meta 40%')
+                        ]
+                        ax.legend(handles=leyenda_elementos, loc='upper right', fontsize=10, 
+                                frameon=True, framealpha=0.9, facecolor='white')
+                        
+                        # Añadir valores en las barras
+                        for i, barra in enumerate(barras):
+                            height = barra.get_height()
+                            ax.text(barra.get_x() + barra.get_width()/2., height + 1,
+                                f'{height:.1f}%', ha='center', va='bottom', fontsize=9, fontweight='bold',
+                                bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8))
+                        
+                        # Mejorar la apariencia del grid
+                        ax.grid(True, axis='y', linestyle='--', alpha=0.3)
+                        ax.set_axisbelow(True)
+                        
+                        # Ajustar límites del eje Y para mejor visualización
+                        ax.set_ylim(0, max(df_grafico['Indicador'] * 100) * 1.15)
+                        
+                        # Ajustar layout para evitar que se corten las etiquetas
+                        plt.tight_layout()
+                        
+                        # Mostrar el gráfico en Streamlit
+                        st.pyplot(fig)
+                        
+                        # Información adicional
+                        st.info(f"**ℹ️ Mostrando {len(df_grafico)} puntos de digitación ordenados por indicador (de mayor a menor)**")
+
+                    # Leyenda de colores (igual que en el AgGrid)
+                    st.markdown("""
+                    <div style="font-size: 14px; margin-top: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 15px; border-radius: 10px;">
+                    <strong style="font-size: 16px; color: #2c3e50;">🎨 Leyenda de Indicadores:</strong><br><br>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                        <span style='color: white; background-color: #00b050; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>Bueno (75-100%)</span>
+                        <span style='color: black; background-color: #ffcc66; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>Regular (60-74%)</span>
+                        <span style='color: black; background-color: #ff7c80; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>En Proceso (25-59%)</span>
+                        <span style='color: white; background-color: #ff0000; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>Malo (0-24%)</span>
+                        <span style='color: black; background-color: lightgray; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 17px;'>Datos Inválidos</span>
+                    </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    # Métricas de resumen
+                    st.subheader(f"📊 Resumen - Mes {mes_seleccionado_ac} / Año {Año_seleccionado_ac}")
+                    
+                    col1, col2, col3, col4 = st.columns(4)
+                    
+                    with col1:
+                        total_registros = len(df_filtradoanual)
+                        st.metric("Total de Registros", f"{total_registros:,}")
+                    
+                    with col2:
+                        if 'Oportunos' in df_filtradoanual.columns:
+                            oportunos_numerico = pd.to_numeric(df_filtradoanual['Oportunos'], errors='coerce').fillna(0)
+                            total_oportunos = int(oportunos_numerico.sum())
+                            st.metric("Total Oportunos", f"{total_oportunos:,}")
+                        else:
+                            st.metric("Total Oportunos", "N/A")
+                    
+                    with col3:
+                        if 'Total_Fuas' in df_filtradoanual.columns:
+                            fuas_numerico = pd.to_numeric(df_filtradoanual['Total_Fuas'], errors='coerce').fillna(0)
+                            total_fuas = int(fuas_numerico.sum())
+                            st.metric("Total FUAS", f"{total_fuas:,}")
+                        else:
+                            st.metric("Total FUAS", "N/A")
+                    
+                    with col4:
+                        if 'Indicador' in df_filtradoanual.columns:
+                            indicador_numerico = pd.to_numeric(df_filtradoanual['Indicador'], errors='coerce')
+                            indicador_promedio = indicador_numerico.mean() * 100
+                            st.metric("Indicador Promedio", f"{indicador_promedio:.1f}%")
+                        else:
+                            st.metric("Indicador Promedio", "N/A")
+                    
+                    # Botón descargar
+                    st.subheader("💾 Exportar Datos Filtrados")
+                    excel_buffer_anual = BytesIO()
+                    with pd.ExcelWriter(excel_buffer_anual, engine='openpyxl') as writer:
+                        df_filtradoanual.to_excel(writer, sheet_name='Datos_Acumulados', index=False)
+                    excel_buffer_anual.seek(0)
+                    
+                    st.download_button(
+                        label="📥 Descargar datos acumulados en Excel",
+                        data=excel_buffer_anual,
+                        file_name=f"datos_acumulados_{mes_seleccionado_ac}_{Año_seleccionado_ac}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        use_container_width=True,
+                        key="descargar_acumulado_grafico"
+                    )
+
+
+        # --- LIENZO 6: EXPORTACIÓN DE DATOS ---
+        with st.expander("💾 **EXPORTACIÓN DE DATOS**", expanded=False):
+            st.subheader("Descargar Reportes")
+            
+            # --- Botón para PDF con todos los gráficos ---
+            buffer = BytesIO()
+            with PdfPages(buffer) as pdf:
+                # Verificar que las figuras existan antes de guardarlas
+                if fig1 is not None:
+                    fig1.savefig(pdf, format='pdf', bbox_inches='tight')
+                if fig2 is not None:
+                    fig2.savefig(pdf, format='pdf', bbox_inches='tight')
+                if fig3 is not None:
+                    fig3.savefig(pdf, format='pdf', bbox_inches='tight')
+                    
+            buffer.seek(0)
+            
+            st.download_button(
+                label="📄 Descargar todos los gráficos en PDF",
+                data=buffer,
+                file_name="graficos_digitacion_completo.pdf",
+                mime="application/pdf"
+            )
+            
+            # Botones adicionales para descargar datos en Excel - CAMBIADOS A XLSX
+            col1, col2 = st.columns(2)
+            with col1:
+                # Crear archivo Excel para datos de digitación
+                excel_digitacion = BytesIO()
+                with pd.ExcelWriter(excel_digitacion, engine='openpyxl') as writer:
+                    df_digitacion.to_excel(writer, sheet_name='Datos_Digitacion', index=False)
+                excel_digitacion.seek(0)
+                
+                st.download_button(
+                    label="📥 Descargar datos de digitación",
+                    data=excel_digitacion,
+                    file_name="datos_digitacion.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+            with col2:
+                if not df_mensual.empty:
+                    # Crear archivo Excel para datos mensuales
+                    excel_mensual = BytesIO()
+                    with pd.ExcelWriter(excel_mensual, engine='openpyxl') as writer:
+                        df_mensual.to_excel(writer, sheet_name='Datos_Mensuales', index=False)
+                    excel_mensual.seek(0)
+                    
+                    st.download_button(
+                        label="📥 Descargar datos mensuales completos",
+                        data=excel_mensual,
+                        file_name="datos_mensuales_completos.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+                else:
+                    st.info("No hay datos mensuales para descargar")
 
 # 🟦 TAB 2: Asegurados
 with tab2:
