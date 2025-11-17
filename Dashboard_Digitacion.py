@@ -1114,7 +1114,7 @@ with tab1:
                         plt.yticks(fontsize=11)
                         
                         # Añadir línea de referencia para la meta (40%)
-                        ax.axhline(y=40, color='red', linestyle='--', alpha=0.7, linewidth=2, label='Meta 40%')
+                        # ax.axhline(y=40, color='red', linestyle='--', alpha=0.7, linewidth=2, label='Meta 40%')
                         
                         # Leyenda personalizada para los colores
                         from matplotlib.patches import Patch
@@ -2129,7 +2129,7 @@ with tab3:
                     st.subheader(f"📈 Indicador de Hipertensión - {mes_seleccionado} {anio_seleccionado}")
                     
                     # Crear figura
-                    fig, ax = plt.subplots(figsize=(14, 8))
+                    fig, ax = plt.subplots(figsize=(14, 6))
                     
                     # --- APLICAR COLORES SEGÚN EL PORCENTAJE ALCANZADO ---
                     colores_barras = []
@@ -2160,13 +2160,13 @@ with tab3:
                                 bbox=dict(facecolor='white', edgecolor='none', alpha=0.8, pad=1))
                     
                     # --- Personalización del gráfico ---
-                    ax.set_title(f"Indicador de Hipertensión por Microrred - {mes_seleccionado} {anio_seleccionado}", 
-                                fontsize=18, weight='bold', pad=20)
-                    ax.set_xlabel("Microrred", fontsize=14, weight='bold')
+                    # --- ax.set_title(f"Indicador de Hipertensión por Microrred - {mes_seleccionado} {anio_seleccionado}", 
+                                # ---fontsize=18, weight='bold', pad=20)
+                    ax.set_xlabel("Microrred", fontsize=12, weight='bold')
                     ax.set_ylabel("Indicador (%)", fontsize=14, weight='bold')
                     
                     # Rotar etiquetas del eje X para mejor legibilidad
-                    plt.xticks(rotation=45, ha='right', fontsize=12)
+                    plt.xticks(rotation=45, ha='right', fontsize=10)
                     plt.yticks(fontsize=12)
                     
                     # Límites y grid
