@@ -2166,7 +2166,7 @@ with tab3:
                     ax.set_ylabel("Indicador (%)", fontsize=14, weight='bold')
                     
                     # Rotar etiquetas del eje X para mejor legibilidad
-                    plt.xticks(rotation=45, ha='right', fontsize=10)
+                    plt.xticks(rotation=45, ha='right', fontsize=9)
                     plt.yticks(fontsize=12)
                     
                     # Límites y grid
