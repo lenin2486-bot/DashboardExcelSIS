@@ -7,6 +7,7 @@ import requests
 import numpy as np
 from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
 import io
+import matplotlib.colors as mcolors
 
 # CONFIGURACIÓN DE PÁGINA PARA HACERLA MÁS ANCHA
 st.set_page_config(
@@ -365,14 +366,12 @@ with tab1:
             with col1:
                 top_trabajador = stats_trabajadores.index[0] if len(stats_trabajadores) > 0 else "N/A"
                 top_total = stats_trabajadores['Total Año'].iloc[0] if len(stats_trabajadores) > 0 else 0    
-                # Usar markdown para mostrar el nombre con tamaño personalizado
-                #st.markdown(f'<p style="font-size: 19px; font-weight: bold; margin-bottom: 0;">"🥇 Top Digitador"</p>')
-                st.markdown('<p style="font-size: 22px; font-weight: bold; margin-bottom: 0;">🥇 Top Digitador</p>', unsafe_allow_html=True)
-                #st.markdown(f'<p style="font-size: 19px; font-weight: bold; margin-bottom: 0;">{top_trabajador}</p>', unsafe_allow_html=True)
-                st.markdown(f'<p style="font-size: 21px; font-weight: bold; margin-bottom: 0; color: #004d00;">{top_trabajador}</p>', unsafe_allow_html=True)
-                #st.metric("", "", f"{top_total:,.0f}")
-                #st.markdown(f'<p style="font-size: 21px; font-weight: bold; color: green; margin-top: 0;color: #000080;">{top_total:,.0f}</p>', unsafe_allow_html=True)
-                st.markdown(f'<p style="font-size:21px; font-weight:bold; color:#000080; margin-top:0; border:1.5px solid #000080; padding:10px 8px; border-radius:8px; background-color:transparent; text-align:center; display:inline-block;">{top_total:,.0f}</p>', unsafe_allow_html=True)
+                st.markdown('<p style="font-size: 27px; font-weight: bold;fontFamily: Bahnschrift Light; margin-bottom: 0;">🥇 Top Digitador</p>', unsafe_allow_html=True)
+                st.markdown(f'<p style="font-size:21px; font-weight:bold; fontFamily: Bahnschrift Light; color:#004d00; margin-top:0; border:1.5px solid #000080; padding:10px 8px; \
+                    border-radius:8px; background-color:transparent; text-align:center; display:inline-block;">{top_trabajador}</p>', \
+                    unsafe_allow_html=True)                                
+                st.markdown(f'<p style="font-size:21px; font-weight:bold; fontFamily: Bahnschrift Light; color:#000080; margin-top:0; border:1.5px solid #000080; padding:10px 8px; \
+                    border-radius:8px; background-color:transparent; text-align:center; display:inline-block;">{top_total:,.0f}</p>', unsafe_allow_html=True)
             with col2:
                 total_trabajadores = len(stats_trabajadores)
                 st.metric("👥 Total Digitadores", total_trabajadores)
@@ -404,12 +403,15 @@ with tab1:
                 pivot_table['Total Año'] = pivot_table.sum(axis=1)
                 pivot_table = pivot_table.sort_values('Total Año', ascending=False)
                 
+                # Definir tu secuencia personalizada de colores
+                colors = ['pink', 'orange', 'lightgreen', 'green']  # De menor a mayor valor
+                custom_cmap = mcolors.LinearSegmentedColormap.from_list('custom_gradient', colors)
                 st.dataframe(
                     pivot_table
                     .style.format('{:,.0f}')
-                    .background_gradient(subset=meses_orden, cmap='Blues')
-                    .background_gradient(subset=['Total Año'], cmap='YlOrBr')
-                    .set_properties(**{'font-size': '18px', "fontFamily": "'Bahnschrift Light', 'Segoe UI', sans-serif"})
+                    .background_gradient(subset=meses_orden, cmap='Blues')                    
+                    .background_gradient(subset=['Total Año'], cmap=custom_cmap)
+                    .set_properties(**{'font-size': '20px', "fontFamily": "'Bahnschrift Light', 'Segoe UI', sans-serif"})
                 )
             else:
                 st.info("No hay datos de trabajadores para mostrar en la tabla")
@@ -1908,7 +1910,7 @@ with tab2:
             st.dataframe(df_resumen_aseg_por_mic.head())
 
     # LIENZO ASEGURADOS POR ESTABLECIMIENTO DE SALUD
-    st.header("🏥 Asegurados por Establecimiento de Salud")
+    # st.header("🏥 Asegurados por Establecimiento de Salud")
 
     # Verificar si hay datos disponibles y que sea un DataFrame
     if (not hasattr(df_resumen_aseg_por_eess, 'columns') or 
