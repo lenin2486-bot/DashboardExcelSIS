@@ -221,9 +221,208 @@ with tab1:
         
         st.pyplot(fig2)
 
+    # --- GRÁFICO INTERACTIVO CON FILTRO DE PPDD Y AÑO ---Por Informático
+    with st.expander("📅 **GRÁFICO INTERACTIVO POR PPDD Y AÑO**", expanded=True):
+        st.subheader("📈 Evolución Mensual por Punto de Digitación y Digitador")
+        
+        # Crear filtros interactivos
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Filtro por PPDD
+            ppdd_disponibles = sorted(df_digitacion['Ppdd'].unique())
+            ppdd_seleccionado = st.selectbox(
+                "**Seleccionar Punto de Digitalización:**",
+                options=ppdd_disponibles
+            )
+        
+        with col2:
+            # Filtro por año - empezando en 2025
+            años_disponibles = sorted(df_digitacion['Aniodig'].unique())
+            # Si no existe 2025, lo agregamos al inicio
+            if 2025 not in años_disponibles:
+                años_disponibles = [2025] + años_disponibles
+            año_seleccionado = st.selectbox(
+                "**Seleccionar Año:**",
+                options=años_disponibles,
+                index=0  # Siempre empezar en 2025
+            )
+        
+        # Filtrar datos por PPDD y año seleccionado
+        df_filtrado = df_digitacion[
+            (df_digitacion['Ppdd'] == ppdd_seleccionado) & 
+            (df_digitacion['Aniodig'] == año_seleccionado)
+        ]
+        
+        if len(df_filtrado) > 0:
+            # Ordenar meses cronológicamente
+            orden_meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+            
+            # Crear columna de mes numérico para ordenamiento
+            mes_orden = {mes: i+1 for i, mes in enumerate(orden_meses)}
+            df_filtrado['Mes_Num'] = df_filtrado['Mesletras'].str.split().str[0].map(mes_orden)
+            df_filtrado = df_filtrado.sort_values('Mes_Num')
+            
+            # Agrupar por mes para el gráfico principal
+            df_mensual_trab = df_filtrado.groupby(['Mesletras', 'Mes_Num'], as_index=False)['Cantidad'].sum()
+            df_mensual_trab = df_mensual_trab.sort_values('Mes_Num')
+            
+            # Agrupar por trabajador y mes para las líneas individuales
+            df_trabajadores = df_filtrado.groupby(['Mesletras', 'Mes_Num', 'Nombres'], as_index=False)['Cantidad'].sum()
+            df_trabajadores = df_trabajadores.sort_values('Mes_Num')
+            
+            # Crear el gráfico principal
+            fig, ax = plt.subplots(figsize=(16, 6))
+            
+            # Graficar línea principal del PPDD (más gruesa)
+            ax.plot(df_mensual_trab['Mesletras'], df_mensual_trab['Cantidad'], 
+                marker='o', linewidth=4, markersize=10, color='#2E86AB', 
+                label=f'TOTAL {ppdd_seleccionado}', alpha=0.9)
+            
+            # Agregar etiquetas en cada punto del total
+            max_cantidad = max(df_mensual_trab['Cantidad']) if len(df_mensual_trab) > 0 else 0
+            for i, (mes, cantidad) in enumerate(zip(df_mensual_trab['Mesletras'], df_mensual_trab['Cantidad'])):
+                ax.text(i, cantidad + (max_cantidad * 0.02), f'{cantidad:,.0f}',
+                    ha='center', va='bottom', fontsize=11, weight='bold',
+                    bbox=dict(boxstyle="round,pad=0.3", facecolor='lightblue', alpha=0.8))
+            
+            # Graficar líneas de cada trabajador
+            trabajadores = df_trabajadores['Nombres'].unique()
+            colors = plt.cm.Set3(np.linspace(0, 1, len(trabajadores)))
+            
+            for i, trabajador in enumerate(trabajadores):
+                df_trab = df_trabajadores[df_trabajadores['Nombres'] == trabajador]
+                ax.plot(df_trab['Mesletras'], df_trab['Cantidad'], 
+                    marker='s', linewidth=3, markersize=6, label=trabajador, color=colors[i],
+                    alpha=0.7)
+
+                # Agregar valores en cada punto
+                for j, (mes, cantidad) in enumerate(zip(df_trab['Mesletras'], df_trab['Cantidad'])):
+                    ax.text(j, cantidad + (max(df_trab['Cantidad']) * 0.03), f'{cantidad:,.0f}',
+                    ha='center', va='top', fontsize=7, weight='bold',
+                    bbox=dict(boxstyle="round,pad=0.2", facecolor='white', alpha=0.8, edgecolor=colors[i]))            
+                    
+                # Agregar etiqueta con el nombre en el último punto de cada trabajador
+                if len(df_trab) > 0:
+                        ultimo_valor = df_trab['Cantidad'].iloc[-1]
+                        ax.annotate(trabajador, 
+                                xy=(len(df_trab['Mesletras'])-1, ultimo_valor),
+                                xytext=(8, 0), textcoords='offset points',
+                                fontsize=8, weight='bold', alpha=0.8,
+                                bbox=dict(boxstyle="round,pad=0.2", facecolor=colors[i], alpha=0.3))
+            
+            # Configuración del gráfico
+            # ax.set_title(f"Evolución Mensual - {ppdd_seleccionado} ({año_seleccionado})\nLíneas por Digitador",fontsize=16, weight='bold', pad=20)
+            ax.set_xlabel("Mes", fontsize=12, weight='bold')
+            ax.set_ylabel("Cantidad Digitada", fontsize=12, weight='bold')
+            ax.grid(True, linestyle='--', alpha=0.3)
+            ax.set_ylim(bottom=0)
+            
+            # Mejorar la visualización
+            plt.xticks(rotation=45, ha='right', fontsize=10)
+            plt.yticks(fontsize=10)
+            #ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=9)
+            ax.legend(loc='upper right', fontsize=9, framealpha=0.9)
+            plt.tight_layout()
+            
+            st.pyplot(fig)
+            
+            # --- ESTADÍSTICAS DEL PPDD ---
+            st.subheader("📊 Estadísticas del Punto de Digitación")
+            
+            # Calcular estadísticas
+            total_año = df_mensual_trab['Cantidad'].sum()
+            promedio_mensual = df_mensual_trab['Cantidad'].mean()
+            mes_max = df_mensual_trab.loc[df_mensual_trab['Cantidad'].idxmax(), 'Mesletras'] if len(df_mensual_trab) > 0 else "N/A"
+            cantidad_max = df_mensual_trab['Cantidad'].max() if len(df_mensual_trab) > 0 else 0
+            meses_activos = len(df_mensual_trab)
+            
+            # Mostrar métricas
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("📈 Total del Año", f"{total_año:,.0f}")
+            with col2:
+                st.metric("📊 Promedio Mensual", f"{promedio_mensual:,.0f}")
+            with col3:
+                st.metric("🏆 Mejor Mes", mes_max, f"{cantidad_max:,.0f}")
+            with col4:
+                st.metric("📅 Meses Activos", meses_activos)
+            
+            # --- ESTADÍSTICAS POR TRABAJADOR ---
+            st.subheader("👥 Estadísticas por Digitador")
+            
+            # Calcular estadísticas por trabajador
+            stats_trabajadores = df_trabajadores.groupby('Nombres').agg({
+                'Cantidad': ['sum', 'mean', 'max', 'count']
+            }).round(0)
+            
+            stats_trabajadores.columns = ['Total Año', 'Promedio Mensual', 'Mejor Mes', 'Meses Activos']
+            stats_trabajadores = stats_trabajadores.sort_values('Total Año', ascending=False)
+            
+            # Mostrar métricas de trabajadores
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                top_trabajador = stats_trabajadores.index[0] if len(stats_trabajadores) > 0 else "N/A"
+                top_total = stats_trabajadores['Total Año'].iloc[0] if len(stats_trabajadores) > 0 else 0    
+                # Usar markdown para mostrar el nombre con tamaño personalizado
+                #st.markdown(f'<p style="font-size: 19px; font-weight: bold; margin-bottom: 0;">"🥇 Top Digitador"</p>')
+                st.markdown('<p style="font-size: 22px; font-weight: bold; margin-bottom: 0;">🥇 Top Digitador</p>', unsafe_allow_html=True)
+                #st.markdown(f'<p style="font-size: 19px; font-weight: bold; margin-bottom: 0;">{top_trabajador}</p>', unsafe_allow_html=True)
+                st.markdown(f'<p style="font-size: 21px; font-weight: bold; margin-bottom: 0; color: #004d00;">{top_trabajador}</p>', unsafe_allow_html=True)
+                #st.metric("", "", f"{top_total:,.0f}")
+                #st.markdown(f'<p style="font-size: 21px; font-weight: bold; color: green; margin-top: 0;color: #000080;">{top_total:,.0f}</p>', unsafe_allow_html=True)
+                st.markdown(f'<p style="font-size:21px; font-weight:bold; color:#000080; margin-top:0; border:1.5px solid #000080; padding:10px 8px; border-radius:8px; background-color:transparent; text-align:center; display:inline-block;">{top_total:,.0f}</p>', unsafe_allow_html=True)
+            with col2:
+                total_trabajadores = len(stats_trabajadores)
+                st.metric("👥 Total Digitadores", total_trabajadores)
+            with col3:
+                promedio_general = stats_trabajadores['Promedio Mensual'].mean() if len(stats_trabajadores) > 0 else 0
+                st.metric("📊 Promedio General", f"{promedio_general:,.0f}")
+            with col4:
+                participacion_top = (top_total / total_año) * 100 if total_año > 0 else 0
+                st.metric("🎯 Participación Top", f"{participacion_top:.1f}%")
+            
+            # --- TABLA DETALLADA ---
+            st.subheader("📋 Detalle Completo por Mes y Digitador")
+            
+            # Crear tabla pivote para mejor visualización
+            if len(df_trabajadores) > 0:
+                pivot_table = df_trabajadores.pivot_table(
+                    values='Cantidad',
+                    index='Nombres',
+                    columns='Mesletras',
+                    aggfunc='sum',
+                    fill_value=0
+                )
+                
+                # Reordenar columnas según orden cronológico
+                meses_orden = [mes for mes in orden_meses if mes in pivot_table.columns]
+                pivot_table = pivot_table[meses_orden]
+                
+                # Agregar total por trabajador
+                pivot_table['Total Año'] = pivot_table.sum(axis=1)
+                pivot_table = pivot_table.sort_values('Total Año', ascending=False)
+                
+                st.dataframe(
+                    pivot_table
+                    .style.format('{:,.0f}')
+                    .background_gradient(subset=meses_orden, cmap='Blues')
+                    .background_gradient(subset=['Total Año'], cmap='YlOrBr')
+                    .set_properties(**{'font-size': '18px', "fontFamily": "'Bahnschrift Light', 'Segoe UI', sans-serif"})
+                )
+            else:
+                st.info("No hay datos de trabajadores para mostrar en la tabla")
+            
+        else:
+            st.info(f"📝 No hay datos disponibles para {ppdd_seleccionado} en el año {año_seleccionado}")
+            st.write("**Sugerencia:** Selecciona un PPDD y año donde existan datos registrados.")
+
     # --- LIENZO 4: LISTADO DE DATOS MENSUALES CON AgGrid ---
     with st.expander("📊 **LISTADO DE DATOS MENSUALES**", expanded=True):
         st.subheader("📋 Oportunidad de Digitación Mensual")
+
+         #st.write("🔍 **Columnas disponibles:**", list(df_digitacion.columns))
         
         # --- FILTROS ---
         col1, col2 = st.columns(2)
@@ -233,7 +432,6 @@ with tab1:
             orden_meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
                         "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
             
-            # Obtener meses únicos del dataframe y ordenarlos cronológicamente
             meses_disponibles = df_mensual["Mes"].dropna().unique()
             meses_disponibles = sorted([m for m in meses_disponibles if m in orden_meses],
                                     key=lambda x: orden_meses.index(x))
@@ -419,7 +617,7 @@ with tab1:
                 }
 
                 # MOSTRAR AgGrid
-                st.write(f"**Mostrando {num_registros} registros** - Use los filtros en los encabezados de columna ↗️")
+                 # st.write(f"**Mostrando {num_registros} registros** - Use los filtros en los encabezados de columna ↗️")
                 
                 grid_response = AgGrid(
                     df_mostrar_formateado,
@@ -453,7 +651,7 @@ with tab1:
 
             else:
                 st.error("No se encontraron las columnas especificadas en el dataset.")
-                st.write("Columnas disponibles en el dataset:", list(df_filtrado.columns))
+                 #st.write("Columnas disponibles en el dataset:", list(df_filtrado.columns))
 
             # Métricas de resumen
             st.subheader(f"📈 Resumen - Mes {mes_seleccionado} / Año {año_seleccionado}")
@@ -506,8 +704,10 @@ with tab1:
     # --- LIENZO 4.5: GRÁFICO DE BARRAS MENSUALES ---
     # --- LIENZO 4.5: GRÁFICO DE BARRAS MENSUALES ---
     with st.expander("📊 **GRÁFICO DE BARRAS MENSUALES**", expanded=True):
-        st.subheader("📈 Oportunidad de Digitación por Punto - Mensual")
+        st.subheader("📈 Oportunidad de Digitación por Punto - Mensual 4.5")
         
+        #st.write("🔍 **Columnas disponibles:**", list(df_mensual.columns))
+
         # --- FILTROS ---
         col1, col2 = st.columns(2)
         
@@ -530,7 +730,7 @@ with tab1:
         
         with col2:
             if 'Año' in df_mensual.columns:
-                años_disponibles = sorted(df_mensual['Año'].unique())
+                años_disponibles = sorted(df_digitacion['Aniodig'].unique())                
                 año_seleccionado = st.selectbox(
                     "Selecciona el Año", 
                     options=años_disponibles,
@@ -548,7 +748,7 @@ with tab1:
                 (df_mensual['Año'] == año_seleccionado)
             ].copy()
         else:
-            df_filtrado = df_mensual.copy()
+            df_filtrado = df_digitacion.copy()
 
         # Verificar si hay datos después del filtro
         if df_filtrado.empty:
